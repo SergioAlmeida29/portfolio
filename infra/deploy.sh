@@ -8,18 +8,12 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WEB_ROOT="/var/www/sergioalmeida.dev/html"
 
 if [ -d "$REPO_DIR/dist" ]; then
-  SRC="$REPO_DIR/dist/"
   echo "-> a publicar build (dist/)"
+  rsync -a --delete "$REPO_DIR/dist/" "$WEB_ROOT/"
 else
-  SRC="$REPO_DIR/"
   echo "-> a publicar index.html do repo (sem build)"
+  rsync -a --delete --include 'index.html' --exclude '*' "$REPO_DIR/" "$WEB_ROOT/"
 fi
-
-rsync -a --delete \
-  --exclude '.git' --exclude 'node_modules' --exclude 'infra' \
-  --exclude 'src' --exclude '*.md' --exclude 'package*.json' \
-  --exclude 'vite.config.*' --exclude 'tsconfig*' --exclude '.github' \
-  "$SRC" "$WEB_ROOT/"
 
 echo "-> publicado em $WEB_ROOT"
 ls -la "$WEB_ROOT"
