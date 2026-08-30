@@ -1,0 +1,15 @@
+# Copiar para ~/.cloudflared/config.yml no Acer e preencher <TUNNEL_ID>.
+# O ficheiro real e o <TUNNEL_ID>.json nao vao para o git (ver .gitignore).
+
+tunnel: <TUNNEL_ID>
+credentials-file: /home/sergio/.cloudflared/<TUNNEL_ID>.json
+
+# Metricas locais (para "cloudflared tunnel info" e debugging)
+metrics: 127.0.0.1:20241
+
+ingress:
+  - hostname: sergioalmeida.dev
+    service: http://127.0.0.1:80
+  - hostname: www.sergioalmeida.dev
+    service: http://127.0.0.1:80
+  - service: http_status:404
