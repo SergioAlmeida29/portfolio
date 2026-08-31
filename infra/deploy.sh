@@ -12,7 +12,8 @@ if [ -d "$REPO_DIR/dist" ]; then
   rsync -a --delete "$REPO_DIR/dist/" "$WEB_ROOT/"
 else
   echo "-> a publicar index.html do repo (sem build)"
-  rsync -a --delete --include 'index.html' --exclude '*' "$REPO_DIR/" "$WEB_ROOT/"
+  find "$WEB_ROOT" -mindepth 1 -delete
+  cp "$REPO_DIR/index.html" "$WEB_ROOT/"
 fi
 
 echo "-> publicado em $WEB_ROOT"
