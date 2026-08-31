@@ -2,10 +2,10 @@ name: deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
 
 concurrency:
-  group: deploy
+  group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -14,4 +14,4 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: publicar
-        run: bash infra/deploy.sh
+        run: bash infra/deploy.sh ${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }}
