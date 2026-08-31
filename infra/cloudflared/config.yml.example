@@ -12,4 +12,6 @@ ingress:
     service: http://127.0.0.1:80
   - hostname: www.sergioalmeida.dev
     service: http://127.0.0.1:80
+  - hostname: staging.sergioalmeida.dev
+    service: http://127.0.0.1:80
   - service: http_status:404
