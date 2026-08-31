@@ -28,7 +28,9 @@ fi
 
 REL="$BASE/releases/$SHA"
 mkdir -p "$REL"
-rsync -a --delete "$SRC/" "$REL/"
+rsync -rlt --delete "$SRC/" "$REL/"
+# garantir que o nginx (www-data) consegue ler tudo
+chmod -R a=rX,u+w "$REL"
 
 # flip atómico do symlink
 ln -sfn "$REL" "$BASE/current.tmp"
