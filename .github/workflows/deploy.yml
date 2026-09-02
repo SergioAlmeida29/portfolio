@@ -3,15 +3,35 @@ name: deploy
 on:
   push:
     branches: [main, dev]
+  pull_request:
 
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: [self-hosted, linux]
     steps:
       - uses: actions/checkout@v5
-      - name: publicar
+
+      - name: instalar deps
+        run: npm ci
+
+      - name: typecheck
+        run: npm run typecheck
+
+      - name: lint
+        run: npm run lint
+
+      - name: build
+        run: |
+          if [ "$GITHUB_REF" = "refs/heads/dev" ]; then
+            npm run build:staging
+          else
+            npm run build
+          fi
+
+      - name: deploy
+        if: github.event_name == 'push'
         run: bash infra/deploy.sh ${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }}
