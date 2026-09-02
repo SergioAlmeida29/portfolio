@@ -2,9 +2,13 @@ node_modules/
 dist/
 dist-ssr/
 *.local
+
 .env
 .env.*
 !.env.example
+!.env.production
+!.env.staging
+
 .DS_Store
 *.log
 .vite/

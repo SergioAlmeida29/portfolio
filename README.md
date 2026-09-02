@@ -13,19 +13,25 @@ Portfólio pessoal — SPA React com cena 3D (React Three Fiber) e scroll-jackin
 ## Infraestrutura
 
 Auto-alojado (Ubuntu Server) exposto via Cloudflare Tunnel. Nginx serve a build estática.
-Deploy automático por GitHub Actions com runner self-hosted em push para `main`.
+Deploy automático por GitHub Actions com runner self-hosted (push `dev` → staging, `main` → produção).
 
-Ver `infra/` para as configs.
+Ver `infra/` e `docs/` para as configs.
 
-## Desenvolvimento
+## Scripts
 
 ```bash
 npm install
-npm run dev
+npm run dev            # servidor de desenvolvimento (localhost:5173)
+npm run typecheck      # tsc -b
+npm run lint           # oxlint
+npm run build          # produção  -> dist/  (.env.production)
+npm run build:staging  # staging   -> dist/  (.env.staging, robots.txt disallow-all)
+npm run preview        # serve o dist/ localmente
 ```
 
-## Build
+## Ambientes
 
-```bash
-npm run build   # gera dist/
-```
+| Modo | Ficheiro env | `VITE_APP_ENV` | Destino |
+|------|--------------|----------------|---------|
+| `build` | `.env.production` | `production` | https://sergioalmeida.dev |
+| `build:staging` | `.env.staging` | `staging` | https://staging.sergioalmeida.dev |
