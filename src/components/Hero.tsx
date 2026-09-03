@@ -1,68 +1,67 @@
-const proof = [
-  { term: 'Atual', value: 'Software Engineer · WEBA (estágio)' },
-  { term: '2026', value: 'AI Engineer · ARMIS Group (estágio)' },
-  { term: 'Open source', value: '3 contribuições merged · Ultralytics, Uno Platform' },
-  { term: 'Distinções', value: '1.º FEUP Engineering Days · 2.º AI Critical Challenge' },
-]
+import { IconDownload } from '@tabler/icons-react'
+import { motion, useReducedMotion } from 'motion/react'
+import { useContent } from '../content'
+import { WordReveal } from './ui/word-reveal'
 
 export function Hero() {
-  return (
-    <section className="mx-auto flex min-h-[100dvh] max-w-6xl flex-col justify-center px-6 pt-28 pb-20 md:px-10">
-      <div className="grid items-center gap-12 md:grid-cols-12">
-        <div className="md:col-span-7">
-          <p className="font-mono text-xs uppercase tracking-[0.22em] text-muted">
-            Software engineer · Porto
-          </p>
-          <h1 className="mt-6 text-6xl font-medium leading-[0.95] tracking-tight sm:text-7xl lg:text-8xl">
-            Sérgio
-            <br />
-            Almeida
-          </h1>
-          <p className="mt-8 max-w-xl text-balance text-lg leading-relaxed text-fg/80 sm:text-xl">
-            Construo sistemas backend e produtos com inteligência artificial, do
-            primeiro protótipo ao deployment.
-          </p>
-          <div className="mt-10 flex flex-wrap items-center gap-3">
-            <a
-              href="#trabalho"
-              className="inline-flex items-center rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-fg transition hover:bg-accent/90 active:scale-[0.98]"
-            >
-              Ver trabalho
-            </a>
-            <a
-              href="#contacto"
-              className="inline-flex items-center rounded-full border border-line px-5 py-2.5 text-sm font-medium text-fg transition hover:border-fg/30 hover:bg-white/[0.03] active:scale-[0.98]"
-            >
-              Contacto
-            </a>
-          </div>
-        </div>
+  const { hero } = useContent()
+  const reduce = useReducedMotion()
+  const rise = (delay: number) => ({
+    initial: reduce ? false : { opacity: 0, y: 14 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] as const },
+  })
 
-        <div className="md:col-span-4 md:col-start-9">
-          <dl className="rounded-xl border border-line bg-surface">
-            {proof.map((row) => (
-              <div
-                key={row.term}
-                className="flex flex-col gap-1 border-b border-line px-4 py-4 last:border-b-0"
-              >
-                <dt className="font-mono text-[11px] uppercase tracking-wider text-muted">
-                  {row.term}
-                </dt>
-                <dd className="text-sm leading-snug text-fg/90">{row.value}</dd>
-              </div>
-            ))}
-            <div className="flex items-center gap-2 px-4 py-4">
-              <span
-                className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
-                aria-hidden
-              />
-              <span className="text-sm text-fg/90">
-                Disponível para propostas e estágios
-              </span>
-            </div>
-          </dl>
-        </div>
-      </div>
+  return (
+    <section className="mx-auto flex min-h-[100dvh] max-w-6xl flex-col justify-center px-6 pt-24 pb-20 md:px-10">
+      <motion.p
+        {...rise(0.02)}
+        className="font-mono text-xs uppercase tracking-[0.24em] text-muted"
+      >
+        {hero.eyebrow}
+      </motion.p>
+
+      <h1 className="mt-7 text-[clamp(4rem,10.5vw,8.5rem)] font-medium leading-[0.92] tracking-[-0.035em]">
+        <span className="block">
+          <WordReveal text="Sérgio" delay={0.06} />
+        </span>
+        <span className="block">
+          <WordReveal text="Almeida" delay={0.14} />
+        </span>
+      </h1>
+
+      <motion.p
+        {...rise(0.26)}
+        className="mt-10 max-w-xl text-balance text-lg leading-relaxed text-fg/80 sm:text-xl"
+      >
+        {hero.lede}
+      </motion.p>
+
+      <motion.div {...rise(0.34)} className="mt-10 flex flex-wrap items-center gap-3">
+        <a
+          href="#internships"
+          className="inline-flex items-center rounded-full bg-accent px-6 py-3 text-sm font-medium text-accent-fg shadow-[0_14px_34px_-18px_rgba(76,164,232,0.55)] transition hover:bg-accent/90 active:translate-y-px"
+        >
+          {hero.primaryCta}
+        </a>
+        {/* O CV é o que permite a um recrutador avançar internamente: fica no
+            primeiro ecrã, não escondido no rodapé. */}
+        <a
+          href="/Sergio-Almeida-CV.pdf"
+          target="_blank"
+          rel="noreferrer"
+          className="glass-soft inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium text-fg transition hover:border-white/20 hover:bg-white/[0.07] active:translate-y-px"
+        >
+          <IconDownload size={16} stroke={1.75} />
+          {hero.cvCta}
+        </a>
+        <a
+          href="#contact"
+          className="inline-flex items-center rounded-full px-4 py-3 text-sm font-medium text-muted transition-colors hover:text-fg"
+        >
+          {hero.contactCta}
+        </a>
+      </motion.div>
     </section>
   )
 }

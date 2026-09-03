@@ -1,41 +1,37 @@
+import { useContent } from '../content'
+import { Reveal } from './ui/reveal'
 import { Section } from './Section'
 
-const extras = [
-  'Tuna de Engenharia da U.Porto',
-  'EBEC 2026 (protótipo eletromecânico em 24h)',
-  'Apoio técnico a eventos na FEUP',
-  'Servidor FiveM com 100+ jogadores em simultâneo',
-]
-
 export function About() {
+  const { about } = useContent()
+
   return (
-    <Section id="sobre" title="Sobre">
-      <p className="max-w-4xl text-2xl font-medium leading-snug tracking-tight text-fg sm:text-3xl">
-        Entro em problemas complexos, percebo as restrições depressa e chego a
-        uma implementação simples, robusta e verificável.
-      </p>
+    <Section id="about" title={about.title}>
+      <Reveal>
+        <p className="max-w-4xl text-2xl font-medium leading-snug tracking-tight text-fg sm:text-3xl">
+          {about.headline}
+        </p>
+      </Reveal>
 
-      <div className="mt-10 max-w-2xl space-y-5 text-[15px] leading-relaxed text-muted">
-        <p>
-          Estudante de Engenharia Informática na Faculdade de Engenharia da
-          Universidade do Porto, com foco em backend, inteligência artificial e
-          ciência de dados. Interessa-me ligar software, dados e modelos para
-          resolver problemas concretos.
-        </p>
-        <p>
-          Já desenvolvi APIs, modelos preditivos, aplicações full-stack com IA e
-          soluções de extração documental por OCR. Nos estágios na ARMIS e na
-          WEBA trabalhei em produtos destinados a utilização real.
-        </p>
+      <div className="mt-12 grid gap-x-16 gap-y-10 md:grid-cols-12">
+        <Reveal delay={0.08} className="md:col-span-7">
+          <div className="space-y-5 text-[15px] leading-relaxed text-muted">
+            {about.body.map((paragraph) => (
+              <p key={paragraph.slice(0, 40)}>{paragraph}</p>
+            ))}
+          </div>
+        </Reveal>
+
+        <Reveal delay={0.16} className="md:col-span-4 md:col-start-9">
+          <ul className="space-y-3 text-sm text-muted">
+            {about.extras.map((extra) => (
+              <li key={extra} className="border-l border-line pl-4 leading-relaxed">
+                {extra}
+              </li>
+            ))}
+          </ul>
+        </Reveal>
       </div>
-
-      <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
-        {extras.map((e) => (
-          <li key={e} className="before:mr-2 before:text-line before:content-['/'] first:before:content-none">
-            {e}
-          </li>
-        ))}
-      </ul>
     </Section>
   )
 }

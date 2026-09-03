@@ -1,18 +1,25 @@
 import { About } from '../components/About'
 import { Contact } from '../components/Contact'
-import { Experience } from '../components/Experience'
+import { Contributions } from '../components/Contributions'
+import { Education } from '../components/Education'
 import { Hero } from '../components/Hero'
+import { Internships } from '../components/Internships'
+import { Projects } from '../components/Projects'
+import { Proof } from '../components/Proof'
 import { Skills } from '../components/Skills'
-import { Work } from '../components/Work'
 
+/* Ordem por importância: estágios, contribuições, projetos, depois o resto. */
 export function Home() {
   return (
     <>
       <Hero />
-      <Work />
-      <About />
+      <Proof />
+      <Internships />
+      <Contributions />
+      <Projects />
       <Skills />
-      <Experience />
+      <Education />
+      <About />
       <Contact />
     </>
   )

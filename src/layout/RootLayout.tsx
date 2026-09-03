@@ -1,17 +1,20 @@
 import { Outlet } from 'react-router-dom'
 import { Nav } from '../components/Nav'
 import { SiteFooter } from '../components/SiteFooter'
+import { useContent } from '../content'
 
 const isStaging = import.meta.env.VITE_APP_ENV === 'staging'
 
 export function RootLayout() {
+  const { ui } = useContent()
+
   return (
     <div className="min-h-[100dvh]">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-accent focus:px-3 focus:py-2 focus:text-sm focus:text-accent-fg"
       >
-        Saltar para o conteúdo
+        {ui.skipToContent}
       </a>
 
       {isStaging && (

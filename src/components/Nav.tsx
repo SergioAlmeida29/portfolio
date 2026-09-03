@@ -1,31 +1,52 @@
-const links = [
-  { href: '#trabalho', label: 'Trabalho' },
-  { href: '#sobre', label: 'Sobre' },
-  { href: '#percurso', label: 'Percurso' },
-  { href: '#contacto', label: 'Contacto' },
-]
+import { motion, useScroll } from 'motion/react'
+import { useContent } from '../content'
+import { LangToggle } from './LangToggle'
 
 export function Nav() {
+  const { nav } = useContent()
+  const { scrollYProgress } = useScroll()
+
   return (
-    <header className="fixed inset-x-0 top-0 z-40 border-b border-line bg-bg/70 backdrop-blur-md">
+    <header className="glass-nav fixed inset-x-0 top-0 z-40">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 md:px-10">
         <a href="#top" className="text-sm font-medium tracking-tight">
           Sérgio Almeida
         </a>
-        <nav className="flex items-center gap-6 text-sm text-muted">
-          {links.map((l, i) => (
+
+        <nav className="flex items-center gap-5 text-sm sm:gap-7">
+          {nav.links.map((link) => (
             <a
-              key={l.href}
-              href={l.href}
-              className={`transition-colors hover:text-fg ${
-                i < links.length - 1 ? 'hidden sm:inline' : ''
-              }`}
+              key={link.href}
+              href={link.href}
+              className="hidden text-muted transition-colors hover:text-fg md:inline"
             >
-              {l.label}
+              {link.label}
             </a>
           ))}
+          <a
+            href="/Sergio-Almeida-CV.pdf"
+            target="_blank"
+            rel="noreferrer"
+            className="hidden text-muted transition-colors hover:text-fg sm:inline"
+          >
+            {nav.cv}
+          </a>
+          <LangToggle />
+          <a
+            href="#contact"
+            className="glass-soft rounded-full px-4 py-1.5 text-fg transition-colors hover:border-white/20 hover:bg-white/[0.07]"
+          >
+            {nav.contact}
+          </a>
         </nav>
       </div>
+
+      {/* Progresso de leitura: feedback de onde se esta na pagina. */}
+      <motion.div
+        aria-hidden
+        style={{ scaleX: scrollYProgress }}
+        className="absolute inset-x-0 bottom-0 h-px origin-left bg-accent/70"
+      />
     </header>
   )
 }
