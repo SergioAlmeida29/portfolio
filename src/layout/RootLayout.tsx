@@ -1,11 +1,11 @@
-import { Outlet } from 'react-router-dom'
+import type { ReactNode } from 'react'
 import { Nav } from '../components/Nav'
 import { SiteFooter } from '../components/SiteFooter'
 import { useContent } from '../content'
 
 const isStaging = import.meta.env.VITE_APP_ENV === 'staging'
 
-export function RootLayout() {
+export function RootLayout({ children }: { children: ReactNode }) {
   const { ui } = useContent()
 
   return (
@@ -26,7 +26,7 @@ export function RootLayout() {
       <Nav />
       <main id="main">
         <span id="top" className="absolute" />
-        <Outlet />
+        {children}
       </main>
       <SiteFooter />
     </div>
