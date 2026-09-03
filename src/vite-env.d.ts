@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  /** 'production' | 'staging' — vem de .env.<mode> */
+  /** 'production' | 'staging', vem de .env.<mode> */
   readonly VITE_APP_ENV: 'production' | 'staging'
   readonly VITE_SITE_URL: string
 }

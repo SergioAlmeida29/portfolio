@@ -2,7 +2,6 @@ import { createBrowserRouter } from 'react-router-dom'
 import { RootLayout } from './layout/RootLayout'
 import { Home } from './routes/Home'
 import { NotFound } from './routes/NotFound'
-import { Projetos } from './routes/Projetos'
 
 export const router = createBrowserRouter([
   {
@@ -11,7 +10,6 @@ export const router = createBrowserRouter([
     errorElement: <NotFound />,
     children: [
       { index: true, element: <Home /> },
-      { path: 'projetos', element: <Projetos /> },
       { path: '*', element: <NotFound /> },
     ],
   },

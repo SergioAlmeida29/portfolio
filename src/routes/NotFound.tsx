@@ -1,13 +1,18 @@
-import { Link } from 'react-router-dom'
-
 export function NotFound() {
   return (
-    <section className="mx-auto flex min-h-svh max-w-2xl flex-col items-center justify-center gap-4 px-6 text-center">
-      <h1 className="text-5xl font-semibold tracking-tight">404</h1>
-      <p className="text-muted">Página não encontrada.</p>
-      <Link to="/" className="underline underline-offset-4 hover:text-fg">
-        voltar ao início
-      </Link>
+    <section className="mx-auto flex min-h-[100dvh] max-w-6xl flex-col items-start justify-center px-6 md:px-10">
+      <p className="font-mono text-xs uppercase tracking-[0.22em] text-muted">
+        Erro 404
+      </p>
+      <h1 className="mt-6 text-4xl font-medium tracking-tight sm:text-5xl">
+        Página não encontrada
+      </h1>
+      <a
+        href="/"
+        className="mt-8 inline-flex items-center rounded-full border border-line px-5 py-2.5 text-sm font-medium transition hover:border-fg/30 hover:bg-white/[0.03]"
+      >
+        Voltar ao início
+      </a>
     </section>
   )
 }
