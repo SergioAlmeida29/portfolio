@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Nav } from '../components/Nav'
 import { SiteFooter } from '../components/SiteFooter'
+import { Water } from '../components/ui/water'
 import { useContent } from '../content'
 
 const isStaging = import.meta.env.VITE_APP_ENV === 'staging'
@@ -23,6 +24,7 @@ export function RootLayout({ children }: { children: ReactNode }) {
         </div>
       )}
 
+      <Water />
       <Nav />
       <main id="main">
         <span id="top" className="absolute" />
