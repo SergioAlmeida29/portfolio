@@ -2,8 +2,9 @@ import { motion, useReducedMotion } from 'motion/react'
 import type { ReactNode } from 'react'
 
 /**
- * Entrada por scroll, uma vez so. Serve a hierarquia: o conteudo chega
- * quando entra em campo, em vez de ja estar todo la.
+ * Entrada por scroll, uma vez só. Translação e nunca opacidade: opacidade
+ * abaixo de 1 isola a subárvore, e o backdrop-filter do vidro deixa de ver a
+ * página — o cartão entrava sem tinta até a animação acabar.
  */
 export function Reveal({
   children,
@@ -19,10 +20,10 @@ export function Reveal({
   return (
     <motion.div
       className={className}
-      initial={reduce ? false : { opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={reduce ? false : { y: 30 }}
+      whileInView={{ y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.65, delay, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
     >
       {children}
     </motion.div>
