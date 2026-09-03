@@ -1,73 +1,61 @@
 import { IconArrowUpRight } from '@tabler/icons-react'
-import { useContent } from '../content'
+import { useContent, useLang } from '../content'
+import { now } from '../content/now.generated'
+import { monthYear } from '../lib/date'
 import { Reveal } from './ui/reveal'
 import { Section } from './Section'
-import { DetailList, Expandable } from './ui/expandable'
 
-/* Estado e diffs verificados na API do GitHub a 2026-09-03. */
 export function Contributions() {
-  const { contributions, ui } = useContent()
+  const { contributions } = useContent()
+  const { lang } = useLang()
 
   return (
     <Section id="open-source" title={contributions.title}>
       <Reveal>
-        <p className="max-w-2xl text-[15px] leading-relaxed text-muted">
-          {contributions.intro}
-        </p>
+        <p className="font-mono text-[11px] text-muted/70">{contributions.listLabel}</p>
       </Reveal>
 
-      <Reveal delay={0.06}>
-        <p className="mt-10 font-mono text-[11px] text-muted/70">
-          {contributions.listLabel}
-        </p>
-      </Reveal>
-
-      <ul className="glass-panel mt-3 divide-y divide-white/[0.07] rounded-xl px-7 md:px-9">
-        {contributions.items.map((item, i) => (
-          <li key={item.repo + item.pr}>
-            <Reveal delay={i * 0.07}>
-              <Expandable className="py-6" label={`${item.repo} ${item.pr}`}
-                head={
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-8">
-                    <div className="flex items-baseline gap-2.5 md:w-56 md:shrink-0">
-                      <span className="font-mono text-[13px] text-fg/90">
-                        {item.repo}
-                      </span>
-                      <span className="font-mono text-[13px] text-muted">
-                        {item.pr}
-                      </span>
-                    </div>
-                    <p className="flex-1 text-sm leading-relaxed text-muted">
-                      {item.what}
-                    </p>
-                    <div className="flex items-center gap-4 md:shrink-0">
-                      <span className="font-mono text-[12px] text-muted/80">
-                        {item.diff}
-                      </span>
-                      <span className="glass-soft rounded-full border-accent/25 px-2.5 py-0.5 font-mono text-[11px] text-accent">
-                        merged
-                      </span>
-                    </div>
-                  </div>
-                }
+      <Reveal>
+        <ul className="glass-panel mt-3 divide-y divide-white/[0.07] rounded-xl px-7 md:px-9">
+          {now.contributions.map((pr, i) => (
+            <li key={i}>
+              <a
+                href={pr.url}
+                target="_blank"
+                rel="noreferrer"
+                className="group/pr flex flex-col gap-3 py-6 md:flex-row md:items-center md:gap-8"
               >
-                <div className="md:pl-64">
-                  <DetailList title={ui.whatChanged} items={item.detail} />
-                  <a
-                    href={item.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-5 inline-flex items-center gap-1 text-sm text-fg/80 transition-colors hover:text-accent"
-                  >
-                    {ui.viewPullRequest}
-                    <IconArrowUpRight size={14} stroke={2} />
-                  </a>
+                <div className="flex items-baseline gap-2.5 md:w-56 md:shrink-0">
+                  <span className="font-mono text-[13px] text-fg/90">{pr.repo}</span>
+                  <span className="font-mono text-[13px] text-muted">#{pr.number}</span>
                 </div>
-              </Expandable>
-            </Reveal>
-          </li>
-        ))}
-      </ul>
+
+                <p className="flex-1 text-sm leading-relaxed text-muted transition-colors group-hover/pr:text-fg/90">
+                  {pr.title}
+                </p>
+
+                <div className="flex items-center gap-4 md:shrink-0">
+                  {pr.additions !== null && (
+                    <span className="font-mono text-[12px] text-muted/80 tabular-nums">
+                      +{pr.additions} −{pr.deletions}
+                    </span>
+                  )}
+                  <span className="glass-soft rounded-full border-accent/25 px-2.5 py-0.5 font-mono text-[11px] text-accent">
+                    {contributions.merged}
+                    {pr.mergedAt && ` · ${monthYear(pr.mergedAt, lang)}`}
+                  </span>
+                  <IconArrowUpRight
+                    size={15}
+                    stroke={2}
+                    aria-hidden
+                    className="text-muted/60 transition-colors group-hover/pr:text-accent"
+                  />
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </Reveal>
 
       <Reveal delay={0.2}>
         <a

@@ -14,11 +14,11 @@ import {
   IconBrandTypescript,
   IconSql,
 } from '@tabler/icons-react'
-import { cn } from '../lib/cn'
 import { useContent } from '../content'
 import { Marquee } from './ui/marquee'
 import { Reveal } from './ui/reveal'
 import { Section } from './Section'
+import { Tags } from './ui/tags'
 
 const stack = [
   { label: 'Python', Icon: IconBrandPython },
@@ -37,10 +37,6 @@ const stack = [
   { label: 'LLMs', Icon: IconBrandOpenai },
 ]
 
-/**
- * Uma lista plana faz Python e Tailwind parecerem a mesma coisa. Os níveis
- * existem para dizer onde é que a profundidade está, sem esconder o resto.
- */
 export function Skills() {
   const { skills } = useContent()
 
@@ -51,40 +47,22 @@ export function Skills() {
           {stack.map(({ label, Icon }) => (
             <span
               key={label}
-              className="flex items-center gap-2.5 text-muted transition-colors hover:text-fg"
+              title={label}
+              aria-label={label}
+              className="text-muted transition-colors hover:text-fg"
             >
-              <Icon size={22} stroke={1.5} />
-              <span className="whitespace-nowrap font-mono text-[13px]">{label}</span>
+              <Icon size={30} stroke={1.4} aria-hidden />
             </span>
           ))}
         </Marquee>
       </Reveal>
 
-      <div className="mt-14 grid gap-5 sm:grid-cols-2">
-        {skills.tiers.map((tier, i) => (
-          <Reveal key={tier.label} delay={i * 0.06}>
-            <div
-              className={cn(
-                'glass-panel h-full rounded-xl p-6',
-                tier.primary && 'border-accent/25 sm:col-span-2',
-              )}
-            >
-              <p
-                className={cn(
-                  'font-mono text-[13px]',
-                  tier.primary ? 'text-accent' : 'text-fg/90',
-                )}
-              >
-                {tier.label}
-              </p>
-              <p
-                className={cn(
-                  'mt-2.5 leading-relaxed',
-                  tier.primary ? 'text-[15px] text-fg/85' : 'text-sm text-muted',
-                )}
-              >
-                {tier.items}
-              </p>
+      <div className="mt-10 grid gap-5 sm:grid-cols-2">
+        {skills.groups.map((group, i) => (
+          <Reveal key={i} delay={i * 0.06}>
+            <div className="glass-panel h-full rounded-xl p-6">
+              <p className="font-mono text-[13px] text-fg/90">{group.label}</p>
+              <Tags items={group.items} className="mt-4" />
             </div>
           </Reveal>
         ))}

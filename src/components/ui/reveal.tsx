@@ -1,11 +1,6 @@
 import { motion, useReducedMotion } from 'motion/react'
 import type { ReactNode } from 'react'
 
-/**
- * Entrada por scroll, uma vez só. Translação e nunca opacidade: opacidade
- * abaixo de 1 isola a subárvore, e o backdrop-filter do vidro deixa de ver a
- * página — o cartão entrava sem tinta até a animação acabar.
- */
 export function Reveal({
   children,
   delay = 0,

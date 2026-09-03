@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 
-/** Faixa contínua, em duas cópias para o loop não ter costura. */
 export function Marquee({
   children,
   className,

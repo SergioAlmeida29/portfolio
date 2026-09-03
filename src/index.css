@@ -15,7 +15,6 @@
 
   --animate-marquee: marquee 48s linear infinite;
 
-  /* Posição da luz na caixa de vidro. O SpotlightCard sobrepõe-lhe o cursor. */
   --glass-light-x: 50%;
   --glass-light-y: -10%;
 
@@ -43,12 +42,6 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/*
-  Fundo, do fundo para a frente: coluna de água (-4), cáusticas (-3, em
-  <Water />), correntes (-2), grão (-1). Nenhuma cria stacking context, por
-  isso ordenam pelo z-index no contexto raiz; nenhuma passa de L≈0.08, para o
-  texto branco manter 7:1.
-*/
 body::before {
   content: '';
   position: fixed;
@@ -62,8 +55,6 @@ body::before {
     linear-gradient(180deg, #061523 0%, #030b13 42%, #01050a 100%);
 }
 
-/* Cáusticas em CSS: fallback de quem não tem WebGL ou highp. O <Water /> marca
-   o html quando arranca e esta camada sai. */
 html::before {
   content: '';
   position: fixed;
@@ -94,7 +85,6 @@ body::after {
   animation: drift 52s ease-in-out infinite alternate;
 }
 
-/* Grão: dá ao saturate() do vidro alta frequência em que pegar. */
 html::after {
   content: '';
   position: fixed;
@@ -123,17 +113,6 @@ html::after {
   }
 }
 
-/*
-  Vidro. Quatro níveis, distintos pelo material e não pelo grau de blur:
-  `glass` placa espessa, `glass-panel` folha fina, `glass-nav` a barra com
-  conteúdo a passar por baixo, `glass-soft` chips sem sombra.
-
-  Refração real foi tentada e removida — 29 fps em scroll contra 143 sem ela.
-  Ver docs/decisoes-frontend.md.
-*/
-
-/* Anel de 1px partilhado pelas duas superfícies; só o gradiente difere, e vem
-   de --glass-ring. `mask-composite: exclude` deixa a moldura e come o miolo. */
 .glass,
 .glass-panel {
   position: relative;
@@ -181,7 +160,6 @@ html::after {
     rgb(9 30 49 / 0.44);
   backdrop-filter: blur(30px) saturate(200%);
   -webkit-backdrop-filter: blur(30px) saturate(200%);
-  /* Espessura: luz por dentro da aresta de cima, eco frio na de baixo. */
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.14),
     inset 0 14px 26px -22px rgb(255 255 255 / 0.3),
@@ -208,8 +186,6 @@ html::after {
     0 18px 44px -30px rgb(0 3 8 / 0.85);
 }
 
-/* Tinta densa: é a única superfície com conteúdo a passar por baixo, e vidro
-   que deixa ler o texto de trás não é profundidade, é ruído. */
 @utility glass-nav {
   position: relative;
   background:
@@ -238,11 +214,6 @@ html::after {
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.13);
 }
 
-/*
-  Reflexo que atravessa a superfície com o scroll, em timeline de CSS. O
-  `overflow: clip` é obrigatório: um pseudo-elemento transformado conta para a
-  área de scroll mesmo recortado, e os 42% davam 538px de scroll horizontal.
-*/
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     .glass,

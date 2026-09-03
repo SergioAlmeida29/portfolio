@@ -1,6 +1,5 @@
 import { cn } from '../../lib/cn'
 
-/** Lista de etiquetas. Tecnologias, competências, o que for enumerável. */
 export function Tags({
   items,
   className,

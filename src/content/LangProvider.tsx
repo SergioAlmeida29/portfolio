@@ -7,17 +7,11 @@ import {
   type LangContextValue,
 } from './context'
 
-/**
- * Inglês é o idioma principal: é o que serve recrutadores fora de Portugal.
- * O português continua completo, à escolha, e a escolha fica guardada.
- */
 function initialLang(): Lang {
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY)
     if (saved === 'en' || saved === 'pt') return saved
-  } catch {
-    /* localStorage pode estar bloqueado; o default resolve. */
-  }
+  } catch {}
   return navigator.language?.toLowerCase().startsWith('pt') ? 'pt' : 'en'
 }
 
@@ -28,13 +22,9 @@ export function LangProvider({ children }: { children: ReactNode }) {
     setLangState(next)
     try {
       window.localStorage.setItem(STORAGE_KEY, next)
-    } catch {
-      /* Sem persistência, a escolha vale só para esta visita. */
-    }
+    } catch {}
   }, [])
 
-  /* O atributo lang do documento tem de acompanhar: leitores de ecrã e
-     tradutores automáticos dependem dele, e o SEO também. */
   useEffect(() => {
     const content = dictionaries[lang]
     document.documentElement.lang = lang

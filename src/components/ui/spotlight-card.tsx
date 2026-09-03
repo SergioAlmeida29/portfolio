@@ -3,11 +3,6 @@ import type { MotionStyle } from 'motion/react'
 import type { MouseEvent, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 
-/**
- * Realce radial que segue o cursor, e as mesmas coordenadas em
- * --glass-light-x/y para a aresta acender do lado por onde ele entra. As
- * coordenadas vivem em motion values, fora do ciclo de render.
- */
 export function SpotlightCard({
   children,
   className,
@@ -31,7 +26,6 @@ export function SpotlightCard({
   return (
     <motion.div
       onMouseMove={handleMouseMove}
-      // MotionStyle não tipa custom properties; o runtime escreve-as na mesma.
       style={
         { '--glass-light-x': lightX, '--glass-light-y': lightY } as MotionStyle
       }

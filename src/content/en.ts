@@ -16,13 +16,11 @@ export const en: SiteContent = {
     detail: 'Detail',
     whatIDid: 'What I did',
     result: 'Result',
-    whatChanged: 'What changed',
-    viewPullRequest: 'View pull request',
   },
 
   nav: {
     links: [
-      { label: 'Internships', href: '#internships' },
+      { label: 'Work experience', href: '#work' },
       { label: 'Open source', href: '#open-source' },
       { label: 'Projects', href: '#projects' },
     ],
@@ -38,74 +36,60 @@ export const en: SiteContent = {
     contactCta: 'Contact',
   },
 
-  proof: {
-    facts: [
-      {
-        value: '10k+',
-        label: 'invoices a year through the system I built end to end at WEBA',
-      },
-      {
-        value: '95%+',
-        label: 'accuracy on the stadium occupancy models I built for the FPF',
-      },
-      {
-        value: '1st',
-        label: 'place overall at FEUP Engineering Days, 2026',
-      },
-    ],
-    availability: 'Open to new challenges · Porto or remote',
+  now: {
+    title: 'This week',
+    window: 'last 7 days on GitHub',
+    commits: 'commits',
+    pullRequests: 'pull requests',
+    issues: 'issues',
+    reposLabel: 'Mostly in',
+    status: 'Final year of my BSc · open to new opportunities',
+    updated: 'Updated',
+    unavailable: 'Activity not available at build time.',
   },
 
+
   internships: {
-    title: 'Internships',
+    title: 'Work experience',
     product: 'The product',
     roles: [
       {
         org: 'WEBA',
         role: 'Software Engineer, summer internship',
         when: 'Jul 2026 – Sep 2026',
-        status: 'Production-ready',
         summary:
-          'A full-stack application that automates reading, extracting and managing invoice data. It combines QR codes with OCR to handle documents that arrive in different layouts and file formats.',
-        ownership:
-          'I was the only developer. The whole application is mine, from the first commit to the production deployment.',
-        metrics: [
-          { value: '10k+', label: 'invoices / year' },
-          { value: '1', label: 'developer — me' },
-          { value: 'Sep 2026', label: 'production-ready' },
-        ],
+          'Full-stack app that reads invoice data automatically, combining QR codes with OCR across mixed layouts and file formats.',
+        mine: 'Sole developer, from the first commit to the production deployment.',
+        stack: ['Angular', '.NET', 'C#', 'Docker', 'CI/CD', 'OCR'],
         challenge:
-          'Build a flow flexible enough to accept several file types, extract information from documents with different structures, and expose that data reliably in an application used by real clients.',
+          'Accept several file types, extract information from documents with different structures, and expose that data reliably to real clients.',
         did: [
-          'Sole developer: Angular frontend and .NET backend, both written by me',
+          'Angular frontend and .NET backend, both written by me',
           'QR code reading and the OCR extraction pipeline across multiple document layouts',
           'Docker containerisation and the full CI/CD pipeline',
           'Production deployment and release',
         ],
         impact: [
           'Handles a flow of more than 10,000 invoices a year',
-          'Left production-ready at the end of the internship, September 2026',
-          'Built with direct mentoring from the company founder, who signed off on the result',
+          'Left production-ready at the end of the internship',
           'Removes manual data entry for invoices arriving in mixed formats',
         ],
-        stack: ['Angular', '.NET', 'C#', 'Docker', 'CI/CD', 'OCR'],
+        metrics: [
+          { value: '10k+', label: 'invoices / year' },
+          { value: '1', label: 'developer' },
+          { value: 'Sep 2026', label: 'in production' },
+        ],
       },
       {
         org: 'ARMIS Group',
         role: 'AI Engineer, curricular internship',
         when: 'Feb 2026 – Jul 2026',
-        status: 'FPF',
         summary:
-          'A ticketing sales intelligence tool for the Portuguese Football Federation: data analysis and predictive models behind an API, so the people running ticket sales can steer them with data instead of intuition.',
-        ownership:
-          'Embedded in a team of more than ten people. I owned the API and the predictive models behind it.',
-        metrics: [
-          { value: '95%+', label: 'occupancy forecast accuracy' },
-          { value: '10+', label: 'people on the team' },
-          { value: 'FPF', label: 'the client' },
-        ],
+          'Ticketing sales intelligence for the Portuguese Football Federation: predictive models behind an API.',
+        mine: 'One of a team of ten. The API and the models were mine.',
+        stack: ['Python', 'C#', 'ASP.NET Core', 'Azure SQL', 'ML'],
         challenge:
-          'Turn structured data and analytical results into something a business team can actually use, on an architecture that survives the jump from proof of concept to product.',
+          'Turn analytical results into something a business team can use, on an architecture that survives the jump from proof of concept to product.',
         did: [
           'RESTful API in ASP.NET Core, exposing the analysis to the product',
           'Data analysis in Python over historical ticketing data',
@@ -114,56 +98,22 @@ export const en: SiteContent = {
         ],
         impact: [
           'Occupancy forecasts above 95% accuracy',
-          'Gives the sales side a data-backed read on each fixture instead of intuition',
+          'Gives the sales side a data-backed read on each fixture',
           'Delivered for the Portuguese Football Federation',
         ],
-        stack: ['Python', 'C#', 'ASP.NET Core', 'Azure SQL', 'ML'],
+        metrics: [
+          { value: '95%+', label: 'forecast accuracy' },
+          { value: '10+', label: 'people on the team' },
+          { value: 'FPF', label: 'the client' },
+        ],
       },
     ],
   },
 
   contributions: {
     title: 'Open source',
-    intro:
-      'Finding the root cause in a codebase that is not mine, proposing the smallest fix that holds, and covering it with tests. Merged into projects with 60k and 10k stars.',
-    listLabel: 'Latest contributions',
-    items: [
-      {
-        repo: 'Ultralytics',
-        pr: '#25873',
-        href: 'https://github.com/ultralytics/ultralytics/pull/25873',
-        what: 'NMS support for CoreML Segment and Pose exports.',
-        diff: '+35 −41',
-        detail: [
-          'Enabled nms=True for segmentation and pose CoreML exports',
-          'Kept masks and keypoints aligned after NMS, and fixed the padding in NMSModel',
-          'Closed issue #25865, which I had opened',
-        ],
-      },
-      {
-        repo: 'Ultralytics',
-        pr: '#25863',
-        href: 'https://github.com/ultralytics/ultralytics/pull/25863',
-        what: 'Aliasing fix in the augmentation config.',
-        diff: '+11 −2',
-        detail: [
-          'Dataset construction was silently mutating a shared hyp config',
-          'Root-cause analysis of a side effect on shared state',
-          'Minimal fix, covered by a regression test',
-        ],
-      },
-      {
-        repo: 'Uno Platform',
-        pr: '#24135',
-        href: 'https://github.com/unoplatform/uno/pull/24135',
-        what: 'Test coverage for VisualStateGroup transitions.',
-        diff: '+137 −0',
-        detail: [
-          'Full transition selection, plus From-only and To-only matches',
-          'Cases where no transition matches at all',
-        ],
-      },
-    ],
+    listLabel: 'Last contributions merged',
+    merged: 'merged',
     more: 'More on GitHub',
     moreHref: 'https://github.com/SergioAlmeida29',
   },
@@ -177,7 +127,7 @@ export const en: SiteContent = {
         when: '2025',
         summary:
           'Real-time voice assistant built at the AI Critical Challenge, run by Critical Software and AEFEUP. Speech in, an LLM and retrieval in the middle, speech out — built in under a week.',
-        stack: 'Speech-to-text, LLMs, RAG, text-to-speech, Web Audio API',
+        stack: ['Speech-to-text', 'LLMs', 'RAG', 'text-to-speech', 'Web Audio API'],
         detail: [
           'Second place with a team of two, against teams of five. I built the whole system; my teammate handled the documentation',
           'Speech to text, interpretation by an LLM, retrieval through RAG, and the answer converted back to speech',
@@ -191,12 +141,64 @@ export const en: SiteContent = {
         ],
       },
       {
+        name: 'sergioalmeida.dev',
+        kind: 'Personal project, this site',
+        when: '2026',
+        summary:
+          'This site, self-hosted end to end. It runs on a repurposed laptop at home, reachable from the internet through a Cloudflare Tunnel, with separate staging and production environments — for €0 a month.',
+        stack: ['React', 'TypeScript', 'Tailwind', 'Nginx', 'Cloudflare Tunnel', 'GitHub Actions'],
+        detail: [
+          'Self-hosted on a repurposed Acer laptop: no cloud bill, full control of the stack',
+          'Cloudflare Tunnel in front of Nginx, with no ports exposed to the internet',
+          'main to production and dev to staging behind Cloudflare Access, with atomic deploys from GitHub Actions',
+          'Accessibility as a requirement: keyboard navigation, visible focus, reduced-motion support',
+        ],
+        links: [
+          { label: 'Code', href: 'https://github.com/SergioAlmeida29/portfolio' },
+        ],
+      },
+      {
+        name: 'FiveM roleplay server',
+        kind: 'Co-founder and developer',
+        when: '2019 – 2023',
+        summary:
+          'Online community with custom backend systems, a database behind hundreds of player accounts, and more than 100 concurrent players.',
+        stack: ['Lua', 'PHP', 'MySQL', 'Blender'],
+        detail: [
+          'Designed the backend systems and the database holding hundreds of accounts and their persistent state',
+          'Caching to keep queries fast with a hundred-plus players writing at once',
+          'Wrote and integrated the server-side scripts, and managed the asset pipeline',
+          'Ran the community side too: moderation, support and the team around it',
+        ],
+      },
+      {
+        name: 'iaedu',
+        kind: 'Personal project',
+        when: '2026',
+        summary:
+          'My faculty gives students an AI endpoint that only takes text in and gives text out. I built a router in front of it that turns it into a general-purpose one — tools, images, context and reasoning effort included.',
+        stack: ['Next.js', 'TypeScript', 'Prisma', 'Supabase', 'Vercel'],
+        detail: [
+          'A frontier model API does a lot more than answer: tool calling, context management, token budgets, model selection, reasoning effort. The faculty endpoint does none of it. The router adds all of it on top of plain text in, plain text out',
+          'Tool calling on an endpoint that has no notion of tools — enough that a coding agent can be pointed at it',
+          'Images and PDFs are extracted to text, audio is transcribed through an external API, so the model handles input it was never exposed to',
+          'Effort levels that turn one question into several passes, instead of making the user pick a model',
+          'Streaming chat over Server-Sent Events, with RAG over uploaded documents and web pages',
+          'SSRF protection on URL ingestion: localhost, private networks and 169.254.x.x all blocked',
+          'Used daily through exam season, by me and by a handful of friends',
+        ],
+        links: [
+          { label: 'Demo', href: 'https://iafeup.vercel.app' },
+          { label: 'Code', href: 'https://github.com/SergioAlmeida29/ai_interface' },
+        ],
+      },
+      {
         name: 'FEUP Engineering Days',
         kind: 'Competition, 1st place',
         when: '2026',
         summary:
           'First place overall among more than 200 participants, competing individually across a series of engineering challenges.',
-        stack: 'Analysis, hands-on problem solving, working under time pressure',
+        stack: ['Analysis', 'hands-on problem solving', 'working under time pressure'],
         detail: [
           'More than 200 participants, competing individually rather than in teams',
           'Successive challenges of different kinds, from hands-on field problems to engineering and problem solving',
@@ -209,80 +211,13 @@ export const en: SiteContent = {
         kind: 'European competition',
         when: '2026',
         summary:
-          'A working electromechanical prototype designed, built and programmed from scratch in 24 hours.',
-        stack: 'Arduino, electronics, prototyping',
+          'A robot that picks objects off a track and clears them, designed, built and programmed from scratch in 24 hours.',
+        stack: ['Arduino', 'ultrasonic sensors', 'electronics', 'woodwork'],
         detail: [
-          'I built the whole prototype myself: the woodwork, the circuit assembly and the Arduino firmware',
-          'From reading the problem to design, build, programming and validation',
-          'Hardware and software integrated under a 24-hour deadline',
-        ],
-      },
-      {
-        name: 'sergioalmeida.dev',
-        kind: 'Personal project, this site',
-        when: '2026',
-        summary:
-          'This site, self-hosted end to end. It runs on a repurposed laptop at home, reachable from the internet through a Cloudflare Tunnel, with separate staging and production environments — for €0 a month.',
-        stack: 'React, TypeScript, Tailwind, Nginx, Cloudflare Tunnel, GitHub Actions',
-        detail: [
-          'Self-hosted on a repurposed Acer laptop: no cloud bill, full control of the stack',
-          'Cloudflare Tunnel in front of Nginx, with no ports exposed to the internet',
-          'main to production and dev to staging behind Cloudflare Access, with atomic deploys from GitHub Actions',
-          'Accessibility as a requirement: keyboard navigation, visible focus, reduced-motion support',
-        ],
-        links: [
-          { label: 'Code', href: 'https://github.com/SergioAlmeida29/portfolio' },
-        ],
-      },
-      {
-        name: 'iaedu',
-        kind: 'Personal project',
-        when: '2026',
-        summary:
-          'AI study platform built on top of the free API my faculty provides. That endpoint only accepts text, so I put a router in front of it that turns a deliberately narrow API into a general-purpose one.',
-        stack: 'Next.js, TypeScript, Prisma, Supabase, Vercel',
-        detail: [
-          'Router in front of a text-only endpoint: PDFs and images are extracted to text, audio is transcribed through an external API, so the same model handles input it was never exposed to',
-          'Quality modes that pick the model automatically, instead of making the user choose',
-          'Streaming chat over Server-Sent Events, with RAG over uploaded documents and web pages',
-          'Conversation persistence and Google authentication',
-          'SSRF protection on URL ingestion: localhost, private networks and 169.254.x.x all blocked',
-          'Used daily through exam season, by me and by a handful of friends',
-        ],
-        links: [
-          { label: 'Demo', href: 'https://iafeup.vercel.app' },
-          { label: 'Code', href: 'https://github.com/SergioAlmeida29/ai_interface' },
-        ],
-      },
-      {
-        name: 'Prog-Project',
-        kind: 'Academic project',
-        when: '2025',
-        summary:
-          'PNG image processor in C++ with its own scripting language and a full test suite.',
-        stack: 'C++17, CMake, sanitizers',
-        detail: [
-          'Polymorphic hierarchy over a Command abstraction, with a parser and an execution pipeline',
-          'Around 70 test cases with pixel-by-pixel comparison against expected images',
-          'AddressSanitizer and UndefinedBehaviorSanitizer wired into CMake',
-          'Explicit ownership, manual memory management and documented leak fixes',
-        ],
-        links: [
-          { label: 'Code', href: 'https://github.com/SergioAlmeida29/Prog-Project' },
-        ],
-      },
-      {
-        name: 'FiveM roleplay server',
-        kind: 'Co-founder and developer',
-        when: '2019 – 2023',
-        summary:
-          'Online community with custom backend systems, a database behind hundreds of player accounts, and more than 100 concurrent players.',
-        stack: 'Lua, PHP, MySQL, Blender',
-        detail: [
-          'Designed the backend systems and the database holding hundreds of accounts and their persistent state',
-          'Caching to keep queries fast with a hundred-plus players writing at once',
-          'Wrote and integrated the server-side scripts, and managed the asset pipeline',
-          'Ran the community side too: moderation, support and the team around it',
+          'Team competition: 24 hours from reading the problem to a robot that ran',
+          'Everything by hand, from cutting the wood to assembling the circuit and writing the Arduino firmware',
+          'Parts and sensors had to be bought with a fixed budget of points, so every sensor was a trade-off rather than a free choice',
+          'Ultrasonic sensors for distance, driving the pick-up logic',
         ],
       },
     ],
@@ -290,24 +225,23 @@ export const en: SiteContent = {
 
   skills: {
     title: 'Skills',
-    tiers: [
+    groups: [
       {
-        label: 'Core — happy to go deep on these',
-        items: 'Python, C#, ASP.NET Core, FastAPI, SQL, REST APIs, microservices',
-        primary: true,
-      },
-      {
-        label: 'AI and data',
-        items: 'LLMs, RAG, predictive models, computer vision, YOLO, OCR, Pandas',
+        label: 'Backend',
+        items: ['Python', 'C#', 'ASP.NET Core', 'FastAPI', 'SQL', 'REST APIs', 'microservices'],
       },
       {
         label: 'Frontend',
-        items: 'TypeScript, Angular, React, Next.js, Tailwind, Prisma',
+        items: ['TypeScript', 'Angular', 'React', 'Next.js', 'Tailwind', 'Prisma'],
       },
       {
-        label: 'Infrastructure and quality',
+        label: 'AI and data',
+        items: ['LLMs', 'RAG', 'predictive models', 'computer vision', 'YOLO', 'OCR', 'Pandas'],
+      },
+      {
+        label: 'Infrastructure',
         items:
-          'Docker, CI/CD, GitHub Actions, Nginx, Cloudflare, PostgreSQL, Azure SQL, testing, sanitizers',
+          ['Docker', 'CI/CD', 'GitHub Actions', 'Nginx', 'Cloudflare', 'PostgreSQL', 'Azure SQL', 'testing', 'sanitizers'],
       },
     ],
   },
@@ -325,13 +259,23 @@ export const en: SiteContent = {
         when: '2023 – Present',
         role: 'Member',
         org: 'Tuna de Engenharia da U.Porto',
-        note: 'Lead organiser of the XI Encontro Solidário de Tunas, with over a thousand people involved.',
+        note: 'Lead organiser of the XI Encontro Solidário de Tunas.',
+        detail: [
+          'Lead organiser of the XI Encontro Solidário de Tunas, with over a thousand people involved',
+          'Budget, logistics and sponsors, coordinated with the groups taking part',
+          'Years of performing live, which is where I learned to hold a room',
+        ],
       },
       {
         when: '2024 – Present',
         role: 'Technical support for events',
         org: 'FEUP',
-        note: 'Setting up and running sound, video and lighting at faculty events.',
+        note: 'Sound, video and lighting at faculty events.',
+        detail: [
+          'Setting up and operating sound, video and lighting at faculty events',
+          'Live operation, where a problem has to be solved while the room is watching',
+          'From small talks to full auditoriums',
+        ],
       },
     ],
     languagesLabel: 'Languages',
@@ -349,12 +293,6 @@ export const en: SiteContent = {
       'Informatics and Computing Engineering student at FEUP, focused on backend, artificial intelligence and data. At WEBA I was the only developer on an invoice automation product: I wrote the Angular frontend, the .NET backend, the OCR pipeline, the Docker setup and the CI/CD, and left it production-ready. At ARMIS I was one of more than ten people building ticketing intelligence for the Portuguese Football Federation, where the API and the predictive models were mine.',
       'Those two internships taught me opposite lessons: owning every decision, and fitting into decisions already made. Open source taught me a third one. In Ultralytics and Uno Platform I work in codebases that are not mine, where the only acceptable change is the smallest one you can defend with a test.',
       'What I want next is to stay close to that seam: backend systems where an API, a model and a real user meet.',
-    ],
-    extras: [
-      'Tuna de Engenharia da U.Porto',
-      'EBEC 2026, electromechanical prototype in 24h',
-      'Technical support for events at FEUP',
-      'FiveM server with over 100 concurrent players',
     ],
   },
 

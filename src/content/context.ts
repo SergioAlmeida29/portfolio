@@ -22,7 +22,6 @@ export function useLang() {
   return value
 }
 
-/** Atalho para quem só precisa do texto. */
 export function useContent() {
   return useLang().content
 }

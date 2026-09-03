@@ -2,8 +2,6 @@ import { useEffect, useRef } from 'react'
 
 const VERT = 'attribute vec2 a; void main(){ gl_Position = vec4(a, 0.0, 1.0); }'
 
-/* highp é obrigatório: o algoritmo trabalha com valores na ordem das centenas
-   e em mediump a quantização transforma os filamentos em quadrados. */
 const FRAG = `
 precision highp float;
 
@@ -59,14 +57,6 @@ function compile(gl: WebGLRenderingContext, type: number, src: string) {
   return shader
 }
 
-/**
- * As cáusticas do fundo, num fragment shader sobre um quadrilátero em ecrã
- * inteiro. A tela é aditiva e transparente: acrescenta luz por cima das
- * camadas em CSS, e onde não há cáustica não há pixel.
- *
- * Sem WebGL ou sem highp, o `data-water` nunca é posto e o `index.css` mantém
- * as cáusticas em mosaico.
- */
 export function Water() {
   const ref = useRef<HTMLCanvasElement>(null)
 
@@ -122,8 +112,6 @@ export function Water() {
     let target = 0
     let frame = 0
 
-    /* Uma cáustica é luz difusa: não ganha com retina, e a área a sombrear
-       cresce com o quadrado do fator. Só corre no evento de resize. */
     function resize() {
       const dpr = Math.min(devicePixelRatio || 1, 1.25)
       canvas.width = Math.round(innerWidth * dpr)
@@ -161,7 +149,6 @@ export function Water() {
       draw(performance.now())
     }
 
-    /* Um fundo que ninguém vê não gasta GPU; em portáteis isso é bateria. */
     function onVisibility() {
       if (document.hidden) {
         cancelAnimationFrame(frame)
