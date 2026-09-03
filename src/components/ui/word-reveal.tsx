@@ -1,10 +1,6 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '../../lib/cn'
 
-/**
- * Revela palavra a palavra por baixo de uma máscara. O padding vertical
- * reserva espaço para descendentes e é anulado pela margem negativa.
- */
 export function WordReveal({
   text,
   className,

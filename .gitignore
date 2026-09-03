@@ -18,6 +18,3 @@ coverage/
 infra/cloudflared/*.json
 infra/cloudflared/cert.pem
 infra/**/secrets*
-
-# ferramentas locais, fora do repo
-CLAUDE.md

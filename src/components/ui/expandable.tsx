@@ -5,7 +5,6 @@ import { useId, useState } from 'react'
 import { useContent } from '../../content'
 import { cn } from '../../lib/cn'
 
-/** Resumo sempre visível, detalhe no `+`. Anima height por ser um acordeão. */
 export function Expandable({
   head,
   children,
@@ -74,7 +73,6 @@ export function Expandable({
   )
 }
 
-/** Lista de detalhe dentro de um painel aberto. */
 export function DetailList({ title, items }: { title: string; items: string[] }) {
   return (
     <div>

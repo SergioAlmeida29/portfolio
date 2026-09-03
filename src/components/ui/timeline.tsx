@@ -3,7 +3,6 @@ import type { ReactNode } from 'react'
 import { useRef, useState } from 'react'
 import { useContent } from '../../content'
 
-/** Carril vertical que se preenche com o scroll. Anima scaleY, nunca height. */
 export function Timeline({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
   const reduce = useReducedMotion()
@@ -29,7 +28,6 @@ export function Timeline({ children }: { children: ReactNode }) {
   )
 }
 
-/** Uma linha do percurso; abre só quando traz `detail`. */
 export function TimelineItem({
   when,
   role,

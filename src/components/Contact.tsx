@@ -25,8 +25,8 @@ export function Contact() {
   const { contact } = useContent()
 
   return (
-    <section id="contact" className="px-6 py-24 md:px-10 md:py-36">
-      <div className="mx-auto max-w-6xl">
+    <section id="contact" className="px-6 py-20 md:px-10 md:py-28">
+      <div className="mx-auto max-w-6xl xl:max-w-7xl">
         <h2 className="text-[clamp(2.5rem,7vw,5rem)] font-medium leading-[1] tracking-[-0.03em]">
           <WordReveal text={contact.heading} inView stagger={0.07} />
         </h2>
