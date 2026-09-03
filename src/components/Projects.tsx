@@ -3,23 +3,24 @@ import { useContent } from '../content'
 import { Reveal } from './ui/reveal'
 import { Section } from './Section'
 import { DetailList, Expandable } from './ui/expandable'
+import { Tags } from './ui/tags'
 
 export function Projects() {
   const { projects, ui } = useContent()
 
   return (
     <Section id="projects" title={projects.title}>
-      <ul className="glass-panel divide-y divide-white/[0.07] rounded-xl px-7 md:px-9">
-        {projects.items.map((p, i) => (
-          <li key={p.name}>
-            <Reveal delay={Math.min(i, 4) * 0.05}>
-              <Expandable className="py-6" label={p.name}
+      <Reveal>
+        <ul className="glass-panel divide-y divide-white/[0.07] rounded-xl px-7 md:px-9">
+          {projects.items.map((p, i) => (
+            <li key={i}>
+              <Expandable
+                className="py-6"
+                label={p.name}
                 head={
                   <div className="md:grid md:grid-cols-12 md:gap-8">
                     <div className="md:col-span-4">
-                      <h3 className="text-base font-medium tracking-tight">
-                        {p.name}
-                      </h3>
+                      <h3 className="text-base font-medium tracking-tight">{p.name}</h3>
                       <p className="mt-1 font-mono text-[11px] text-muted">
                         {p.kind}, {p.when}
                       </p>
@@ -31,9 +32,7 @@ export function Projects() {
                 }
               >
                 <div className="md:grid md:grid-cols-12 md:gap-8">
-                  <p className="font-mono text-[11px] leading-relaxed text-muted/70 md:col-span-4">
-                    {p.stack}
-                  </p>
+                  <Tags items={p.stack} className="md:col-span-4" />
                   <div className="mt-6 md:col-span-8 md:mt-0">
                     <DetailList title={ui.detail} items={p.detail} />
                     {p.links && (
@@ -55,10 +54,10 @@ export function Projects() {
                   </div>
                 </div>
               </Expandable>
-            </Reveal>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      </Reveal>
     </Section>
   )
 }

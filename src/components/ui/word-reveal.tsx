@@ -1,12 +1,6 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '../../lib/cn'
 
-/**
- * Revela palavra a palavra por baixo de uma mascara. Usado so onde a
- * hierarquia manda: o nome no hero e os titulos de seccao.
- * O padding vertical reserva espaco para descendentes (o "g" de Sergio)
- * e e anulado pela margem negativa para nao mexer no layout.
- */
 export function WordReveal({
   text,
   className,
@@ -33,7 +27,7 @@ export function WordReveal({
     <span className={cn('inline-flex flex-wrap', className)}>
       {words.map((word, i) => (
         <span
-          key={word + i}
+          key={i}
           className="inline-block overflow-hidden py-[0.16em] -my-[0.16em] pr-[0.26em] last:pr-0"
         >
           <motion.span

@@ -1,8 +1,3 @@
-/**
- * Forma do conteúdo do site. Cada idioma preenche exatamente esta estrutura,
- * portanto o TypeScript garante que nenhuma tradução fica para trás.
- */
-
 export type Link = { label: string; href: string }
 export type Metric = { value: string; label: string }
 
@@ -10,27 +5,13 @@ export type Role = {
   org: string
   role: string
   when: string
-  status: string
-  /** O produto: o que existe no mundo. */
   summary: string
-  /** A minha posição nele, numa linha. */
-  ownership: string
-  metrics: Metric[]
-  challenge: string
-  /** O que fiz eu. */
-  did: string[]
-  /** O que resultou disso. */
-  impact: string[]
+  mine: string
   stack: string[]
-}
-
-export type Contribution = {
-  repo: string
-  pr: string
-  href: string
-  what: string
-  diff: string
-  detail: string[]
+  challenge: string
+  did: string[]
+  impact: string[]
+  metrics: Metric[]
 }
 
 export type Project = {
@@ -38,7 +19,7 @@ export type Project = {
   kind: string
   when: string
   summary: string
-  stack: string
+  stack: string[]
   detail: string[]
   links?: Link[]
 }
@@ -48,13 +29,12 @@ export type EducationRow = {
   role: string
   org: string
   note: string
+  detail?: string[]
 }
 
-export type SkillTier = {
+export type SkillGroup = {
   label: string
-  items: string
-  /** Marca o nível que defendo a fundo, para haver hierarquia visível. */
-  primary?: boolean
+  items: string[]
 }
 
 export type SiteContent = {
@@ -67,8 +47,6 @@ export type SiteContent = {
     detail: string
     whatIDid: string
     result: string
-    whatChanged: string
-    viewPullRequest: string
   }
   nav: { links: Link[]; contact: string; cv: string }
   hero: {
@@ -78,25 +56,34 @@ export type SiteContent = {
     cvCta: string
     contactCta: string
   }
-  proof: { facts: Metric[]; availability: string }
+  now: {
+    title: string
+    window: string
+    commits: string
+    pullRequests: string
+    issues: string
+    reposLabel: string
+    status: string
+    updated: string
+    unavailable: string
+  }
   internships: { title: string; product: string; roles: Role[] }
   contributions: {
     title: string
-    intro: string
     listLabel: string
-    items: Contribution[]
+    merged: string
     more: string
     moreHref: string
   }
   projects: { title: string; items: Project[] }
-  skills: { title: string; tiers: SkillTier[] }
+  skills: { title: string; groups: SkillGroup[] }
   education: {
     title: string
     rows: EducationRow[]
     languagesLabel: string
     languages: string[]
   }
-  about: { title: string; headline: string; body: string[]; extras: string[] }
+  about: { title: string; headline: string; body: string[] }
   notFound: { code: string; title: string; back: string }
   contact: {
     heading: string

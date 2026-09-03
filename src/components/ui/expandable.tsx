@@ -5,11 +5,6 @@ import { useId, useState } from 'react'
 import { useContent } from '../../content'
 import { cn } from '../../lib/cn'
 
-/**
- * Divulgação progressiva. O resumo fica sempre visível, o detalhe abre por
- * cima do sítio. Transição de estado, portanto a altura anima: é a única
- * forma honesta de fazer um acordeão, e é um gesto discreto, não por frame.
- */
 export function Expandable({
   head,
   children,
@@ -78,7 +73,6 @@ export function Expandable({
   )
 }
 
-/** Lista de detalhe dentro de um painel aberto. */
 export function DetailList({ title, items }: { title: string; items: string[] }) {
   return (
     <div>

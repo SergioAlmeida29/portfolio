@@ -1,11 +1,6 @@
 import type { ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 
-/**
- * Faixa continua. Serve para largura: mostra a extensao da stack sem
- * transformar a seccao numa lista de 22 linhas. Pausa em hover e para
- * por completo com prefers-reduced-motion.
- */
 export function Marquee({
   children,
   className,

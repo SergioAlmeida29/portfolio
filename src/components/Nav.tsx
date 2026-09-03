@@ -8,7 +8,7 @@ export function Nav() {
 
   return (
     <header className="glass-nav fixed inset-x-0 top-0 z-40">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 md:px-10">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between xl:max-w-7xl px-6 md:px-10">
         <a href="#top" className="text-sm font-medium tracking-tight">
           Sérgio Almeida
         </a>
@@ -41,7 +41,6 @@ export function Nav() {
         </nav>
       </div>
 
-      {/* Progresso de leitura: feedback de onde se esta na pagina. */}
       <motion.div
         aria-hidden
         style={{ scaleX: scrollYProgress }}

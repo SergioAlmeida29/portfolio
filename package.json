@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "build:staging": "tsc -b && vite build --mode staging && node scripts/robots.mjs",
+    "build": "node scripts/now.mjs && tsc -b && vite build",
+    "build:staging": "node scripts/now.mjs && tsc -b && vite build --mode staging && node scripts/robots.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "lint": "oxlint"
@@ -19,7 +19,6 @@
     "motion": "^13.2.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router-dom": "^7.9.4",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
