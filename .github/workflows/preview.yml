@@ -46,8 +46,11 @@ jobs:
             "$N" "$(git rev-parse --short HEAD)")"
 
           # um comentário só, actualizado a cada push, em vez de uma enxurrada
-          id="$(gh api "repos/$GITHUB_REPOSITORY/issues/$N/comments" \
-            --jq '[.[] | select(.body | startswith("<!-- preview -->")) | .id] | first // empty')"
+          api="${GITHUB_API_URL:-https://api.github.com}"
+          headers=(-H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN")
+          id="$(curl --fail --silent --show-error "${headers[@]}" \
+            "$api/repos/$GITHUB_REPOSITORY/issues/$N/comments" \
+            | jq -r '[.[] | select(.body | startswith("<!-- preview -->")) | .id] | first // empty')"
 
           if [ -n "$id" ]; then
             alvo="repos/$GITHUB_REPOSITORY/issues/comments/$id"
@@ -57,7 +60,10 @@ jobs:
             metodo=POST
           fi
 
-          jq -n --arg body "$corpo" '{body: $body}' | gh api "$alvo" -X "$metodo" --input - >/dev/null
+          jq -n --arg body "$corpo" '{body: $body}' | \
+            curl --fail --silent --show-error "${headers[@]}" \
+            -H "Content-Type: application/json" -X "$metodo" \
+            --data-binary @- "$api/$alvo" >/dev/null
 
   apagar:
     if: github.event.action == 'closed'
