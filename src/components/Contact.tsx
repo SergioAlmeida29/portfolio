@@ -5,6 +5,7 @@ import {
   IconMail,
 } from '@tabler/icons-react'
 import { useContent } from '../content'
+import { cvUrl } from '../lib/base'
 import { Reveal } from './ui/reveal'
 import { WordReveal } from './ui/word-reveal'
 
@@ -59,7 +60,7 @@ export function Contact() {
                 </a>
               ))}
               <a
-                href="/Sergio-Almeida-CV.pdf"
+                href={cvUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-sm text-accent transition-colors hover:bg-accent/15"
