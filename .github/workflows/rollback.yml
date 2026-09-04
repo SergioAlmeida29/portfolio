@@ -1,0 +1,39 @@
+name: rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      ambiente:
+        description: 'Ambiente a reverter'
+        required: true
+        type: choice
+        options: [prod, staging]
+      release:
+        description: 'Release de destino (vazio = a anterior)'
+        required: false
+        type: string
+
+concurrency:
+  group: rollback-${{ inputs.ambiente }}
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    runs-on: [self-hosted, linux]
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: reverter e verificar
+        shell: bash
+        env:
+          AMBIENTE: ${{ inputs.ambiente }}
+          RELEASE: ${{ inputs.release }}
+        run: |
+          bash infra/rollback.sh "$AMBIENTE" "$RELEASE" 2>&1 | tee "$RUNNER_TEMP/rollback.log"
+          {
+            echo "## Rollback — $AMBIENTE"
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/rollback.log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

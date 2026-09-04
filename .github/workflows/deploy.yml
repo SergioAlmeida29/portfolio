@@ -12,6 +12,8 @@ concurrency:
 jobs:
   build:
     runs-on: [self-hosted, linux]
+    env:
+      AMBIENTE: ${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }}
     steps:
       - uses: actions/checkout@v5
 
@@ -34,4 +36,9 @@ jobs:
 
       - name: deploy
         if: github.event_name == 'push'
-        run: bash infra/deploy.sh ${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }}
+        run: bash infra/deploy.sh "$AMBIENTE"
+
+      # o build verde só diz que compila; isto diz que o site responde
+      - name: smoke
+        if: github.event_name == 'push'
+        run: bash infra/smoke.sh "$AMBIENTE"
