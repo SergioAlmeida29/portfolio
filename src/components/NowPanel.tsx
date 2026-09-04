@@ -30,13 +30,17 @@ export function NowPanel() {
           <>
             <dl className="mt-6 space-y-3">
               {stats.map((stat) => (
+                // dentro de um dl, um div so pode conter dt e dd; o traco
+                // decorativo vive por isso dentro do dd, e o rotulo e o proprio
+                // dt reordenado, em vez de existir duas vezes
                 <div key={stat.label} className="flex items-baseline gap-3">
-                  <dt className="sr-only">{stat.label}</dt>
-                  <dd className="font-mono text-2xl tabular-nums leading-none text-fg">
-                    {stat.value}
+                  <dt className="order-2 text-sm text-muted">{stat.label}</dt>
+                  <dd className="order-1 flex flex-1 items-baseline gap-3">
+                    <span className="font-mono text-2xl tabular-nums leading-none text-fg">
+                      {stat.value}
+                    </span>
+                    <span aria-hidden className="h-px flex-1 bg-white/[0.08]" />
                   </dd>
-                  <span aria-hidden className="h-px flex-1 bg-white/[0.08]" />
-                  <span className="text-sm text-muted">{stat.label}</span>
                 </div>
               ))}
             </dl>
