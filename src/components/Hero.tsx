@@ -1,6 +1,7 @@
 import { IconDownload } from '@tabler/icons-react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useContent } from '../content'
+import { cvUrl } from '../lib/base'
 import { NowPanel } from './NowPanel'
 import { WordReveal } from './ui/word-reveal'
 
@@ -47,7 +48,7 @@ export function Hero() {
             {hero.primaryCta}
           </a>
           <a
-            href="/Sergio-Almeida-CV.pdf"
+            href={cvUrl}
             target="_blank"
             rel="noreferrer"
             className="glass-soft inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium text-fg transition hover:border-white/20 hover:bg-white/[0.07] active:translate-y-px"
