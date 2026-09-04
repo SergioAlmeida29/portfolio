@@ -9,7 +9,8 @@ set -euo pipefail
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 
 AMB="${1:-prod}"
-HOST="$(host_de "$AMB")" || { echo "uso: smoke.sh [prod|staging]" >&2; exit 2; }
+HOST="$(host_de "$AMB")" || { echo "uso: smoke.sh [prod|staging|preview:N]" >&2; exit 2; }
+CAMINHO="$(caminho_de "$AMB")"
 
 TENTATIVAS=10
 INTERVALO=2
@@ -25,14 +26,14 @@ falhar() { echo "smoke $AMB: $1" >&2; exit 1; }
 # 1. o index responde 200 — com retry, porque um deploy acabado de fazer pode
 #    apanhar o nginx a meio de recarregar o cache de descritores
 for tentativa in $(seq 1 "$TENTATIVAS"); do
-  codigo="$(pedir --output "$TMP/index.html" --write-out '%{http_code}' "$URL_BASE/" || echo 000)"
+  codigo="$(pedir --output "$TMP/index.html" --write-out '%{http_code}' "$URL_BASE$CAMINHO" || echo 000)"
   [ "$codigo" = 200 ] && break
   [ "$tentativa" = "$TENTATIVAS" ] && falhar "o index respondeu $codigo apos $TENTATIVAS tentativas"
   sleep "$INTERVALO"
 done
 
 # 2. é HTML, e é o nosso
-tipo="$(pedir --output /dev/null --write-out '%{content_type}' "$URL_BASE/")"
+tipo="$(pedir --output /dev/null --write-out '%{content_type}' "$URL_BASE$CAMINHO")"
 case "$tipo" in text/html*) ;; *) falhar "o index veio como '$tipo', nao HTML" ;; esac
 grep -q 'id="root"' "$TMP/index.html" || falhar 'o index nao tem <div id="root">'
 
@@ -46,4 +47,4 @@ codigo="$(pedir --output /dev/null --write-out '%{http_code}' "$URL_BASE$js")"
 # 4. o healthcheck que a Cloudflare consulta
 [ "$(pedir "$URL_BASE/healthz")" = ok ] || falhar '/healthz nao devolveu ok'
 
-echo "smoke $AMB: ok (index, $js, /healthz)"
+echo "smoke $AMB: ok ($CAMINHO, $js, /healthz)"

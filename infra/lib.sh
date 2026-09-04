@@ -2,21 +2,39 @@
 # Fonte de verdade dos caminhos de cada ambiente e do flip do symlink.
 # Carregado por deploy.sh, smoke.sh e rollback.sh.
 
-# host_de <prod|staging> -> o server_name do nginx
+# A raiz do disco. WEB_ROOT existe para estes scripts poderem ser exercitados
+# fora do Acer.
+raiz_web() { echo "${WEB_ROOT:-/var/www}"; }
+
+# host_de <prod|staging|preview:N> -> o server_name do nginx.
+# Os previews são servidos pelo servidor de staging, logo herdam o Cloudflare
+# Access e o noindex que já lá estão.
 host_de() {
   case "$1" in
-    prod)    echo sergioalmeida.dev ;;
-    staging) echo staging.sergioalmeida.dev ;;
-    *)       return 2 ;;
+    prod)                echo sergioalmeida.dev ;;
+    staging | preview:*) echo staging.sergioalmeida.dev ;;
+    *)                   return 2 ;;
   esac
 }
 
-# base_de <prod|staging> -> a raiz no disco (o web root deriva do host).
-# WEB_ROOT existe para estes scripts poderem ser exercitados fora do Acer.
+# caminho_de <ambiente> -> o prefixo de URL onde o site fica montado
+caminho_de() {
+  case "$1" in
+    preview:*) echo "/pr/${1#preview:}/" ;;
+    *)         echo / ;;
+  esac
+}
+
+# base_de <ambiente> -> a pasta de releases desse ambiente
 base_de() {
   local host
-  host="$(host_de "$1")" || return 2
-  echo "${WEB_ROOT:-/var/www}/$host"
+  case "$1" in
+    preview:*) echo "$(raiz_web)/previews/${1#preview:}" ;;
+    *)
+      host="$(host_de "$1")" || return 2
+      echo "$(raiz_web)/$host"
+      ;;
+  esac
 }
 
 # apontar <base> <release> — flip atómico: o mv de um symlink sobre outro é

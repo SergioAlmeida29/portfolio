@@ -1,0 +1,69 @@
+name: preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  N: ${{ github.event.pull_request.number }}
+
+jobs:
+  publicar:
+    if: github.event.action != 'closed'
+    runs-on: [self-hosted, linux]
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: instalar deps
+        run: npm ci
+
+      - name: build com a base do preview
+        env:
+          # o vite.config.ts lê isto; assim o preview usa o mesmo script de
+          # build do staging em vez de duplicar a cadeia de comandos
+          BASE_PATH: /pr/${{ github.event.pull_request.number }}/
+          GITHUB_TOKEN: ${{ github.token }}
+        run: npm run build:staging
+
+      - name: publicar
+        run: bash infra/deploy.sh "preview:$N"
+
+      - name: smoke
+        run: bash infra/smoke.sh "preview:$N"
+
+      - name: comentar o url
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          corpo="$(printf '<!-- preview -->\n**Preview:** https://staging.sergioalmeida.dev/pr/%s/\n\nCommit `%s`. Atrás do Cloudflare Access, como o staging.' \
+            "$N" "$(git rev-parse --short HEAD)")"
+
+          # um comentário só, actualizado a cada push, em vez de uma enxurrada
+          id="$(gh api "repos/$GITHUB_REPOSITORY/issues/$N/comments" \
+            --jq '[.[] | select(.body | startswith("<!-- preview -->")) | .id] | first // empty')"
+
+          if [ -n "$id" ]; then
+            alvo="repos/$GITHUB_REPOSITORY/issues/comments/$id"
+            metodo=PATCH
+          else
+            alvo="repos/$GITHUB_REPOSITORY/issues/$N/comments"
+            metodo=POST
+          fi
+
+          jq -n --arg body "$corpo" '{body: $body}' | gh api "$alvo" -X "$metodo" --input - >/dev/null
+
+  apagar:
+    if: github.event.action == 'closed'
+    runs-on: [self-hosted, linux]
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: apagar o preview
+        run: bash infra/preview-apagar.sh "$N"
