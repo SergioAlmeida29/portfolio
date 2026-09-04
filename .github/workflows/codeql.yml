@@ -1,0 +1,33 @@
+name: codeql
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+  # o CodeQL melhora as queries entre releases: uma passagem semanal apanha
+  # vulnerabilidades novas em código que não mudou
+  schedule:
+    - cron: '0 4 * * 1'
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: iniciar codeql
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+
+      - name: analisar
+        uses: github/codeql-action/analyze@v4
