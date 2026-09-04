@@ -1,0 +1,78 @@
+name: ai-triage
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened, edited]
+  workflow_dispatch:
+    inputs:
+      numero:
+        description: 'Número do issue ou PR a triar'
+        required: true
+        type: number
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: instalar opencode
+        run: |
+          bash "$GITHUB_WORKSPACE/.github/scripts/install-opencode.sh"
+          echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
+
+      - name: resolver número alvo
+        env:
+          NUMERO_INPUT: ${{ inputs.numero }}
+        run: |
+          n="$(jq -r '.issue.number // .pull_request.number // empty' "$GITHUB_EVENT_PATH")"
+          [ -n "$n" ] || n="$NUMERO_INPUT"
+          if [ -z "$n" ] || [ "$n" = "null" ]; then
+            echo "::error::Sem número alvo"
+            exit 1
+          fi
+          echo "ALVO=$n" >> "$GITHUB_ENV"
+
+      - name: aplicar etiquetas
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # a triagem escreve etiquetas, logo o modelo precisa mesmo do gh
+          OPENCODE_ALLOW_GITHUB_TOKEN: true
+        run: |
+          PROMPT="Faz a triagem do issue ou pull request #$ALVO aplicando etiquetas. NÃO escrevas nenhum comentário: a única escrita permitida é aplicar etiquetas.
+
+          $(cat "$GITHUB_WORKSPACE/.github/scripts/contexto.md")
+
+          Passos:
+
+          1. Lê o título e o corpo:
+             gh api \"repos/\$GITHUB_REPOSITORY/issues/$ALVO\" --jq '\"\\(.title)\\n\\n\\(.body)\"'
+
+          2. Aplica uma a duas etiquetas de tipo, desta lista fechada e de mais nenhuma:
+             enhancement · bug · performance · accessibility · content · infra · documentation
+
+          3. Aplica exactamente UMA de prioridade:
+             prioridade: alta   — bloqueia outro trabalho, parte produção ou expõe um segredo
+             prioridade: média  — importante, mas não bloqueia nada
+             prioridade: baixa  — cosmético, documentação ou adiável
+
+          Comando para aplicar:
+             printf '{\"labels\":[\"<tipo>\",\"<prioridade>\"]}' | gh api \"repos/\$GITHUB_REPOSITORY/issues/$ALVO/labels\" -X POST --input - >/dev/null
+
+          Não abras PRs nem alteres código. No fim responde só com a lista das etiquetas que aplicaste."
+          export PROMPT
+
+          bash "$GITHUB_WORKSPACE/.github/scripts/run-com-fallback.sh" \
+            "bash $GITHUB_WORKSPACE/.github/scripts/tem-prioridade.sh" >/dev/null
+
+          gh api "repos/$GITHUB_REPOSITORY/issues/$ALVO/labels" --jq '[.[].name] | join(", ")'
