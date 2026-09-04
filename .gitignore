@@ -18,3 +18,6 @@ coverage/
 infra/cloudflared/*.json
 infra/cloudflared/cert.pem
 infra/**/secrets*
+test-results/
+playwright-report/
+.lighthouseci/

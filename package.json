@@ -9,7 +9,8 @@
     "build:staging": "node scripts/now.mjs && tsc -b && vite build --mode staging && node scripts/robots.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "lint": "oxlint"
+    "lint": "oxlint",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.5",
@@ -22,6 +23,9 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/vite": "^4.1.14",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
