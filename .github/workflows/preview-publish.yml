@@ -6,7 +6,7 @@ on:
     types: [completed]
 
 concurrency:
-  group: preview-publish-${{ github.event.workflow_run.id }}
+  group: preview-deploy-${{ github.event.workflow_run.pull_requests[0].number }}
   cancel-in-progress: true
 
 jobs:
