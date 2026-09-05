@@ -67,24 +67,8 @@ jobs:
           name: deploy-dist
           path: dist/
 
-      - name: deploy
-        run: bash infra/deploy.sh "$AMBIENTE"
-
-      # o smoke valida a release nova; se falhar, restaura a anterior mas
-      # mantém este job vermelho para a falha continuar visível no GitHub
-      - name: smoke com rollback
+      # mantém este job vermelho se a release nova ou o rollback falharem
+      - name: deploy e smoke com rollback
         if: github.event_name == 'push'
         id: smoke
-        shell: bash
-        run: |
-          if bash infra/smoke.sh "$AMBIENTE"; then
-            exit 0
-          else
-            status=$?
-          fi
-
-          echo "::error::smoke falhou em $AMBIENTE; a reverter para a release anterior"
-          if ! bash infra/rollback.sh "$AMBIENTE"; then
-            echo "::error::rollback também falhou"
-          fi
-          exit "$status"
+        run: bash infra/deploy-and-verify.sh "$AMBIENTE"
