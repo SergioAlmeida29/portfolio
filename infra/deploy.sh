@@ -17,6 +17,10 @@ SHA="${GITHUB_SHA:-$(git -C "$REPO_DIR" rev-parse HEAD)}"
 KEEP=5
 
 [ -d "$REPO_DIR/dist" ] || { echo "sem dist/ para publicar — falta correr o build" >&2; exit 1; }
+[ -z "$(find "$REPO_DIR/dist" -type l -print -quit)" ] || {
+  echo "dist/ contem symlink — publicação recusada" >&2
+  exit 1
+}
 
 REL="$BASE/releases/$SHA"
 mkdir -p "$REL"

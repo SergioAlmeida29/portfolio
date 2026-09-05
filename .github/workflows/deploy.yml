@@ -11,11 +11,16 @@ concurrency:
 
 jobs:
   build:
-    runs-on: [self-hosted, linux]
-    env:
-      AMBIENTE: ${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
 
       - name: instalar deps
         run: npm ci
@@ -34,11 +39,50 @@ jobs:
             npm run build
           fi
 
-      - name: deploy
+      - name: guardar artifact do deploy
         if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
+
+  publicar:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: [self-hosted, linux]
+    permissions:
+      contents: read
+    env:
+      AMBIENTE: ${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: obter artifact do deploy
+        uses: actions/download-artifact@v5
+        with:
+          name: deploy-dist
+          path: dist/
+
+      - name: deploy
         run: bash infra/deploy.sh "$AMBIENTE"
 
-      # o build verde só diz que compila; isto diz que o site responde
-      - name: smoke
+      # o smoke valida a release nova; se falhar, restaura a anterior mas
+      # mantém este job vermelho para a falha continuar visível no GitHub
+      - name: smoke com rollback
         if: github.event_name == 'push'
-        run: bash infra/smoke.sh "$AMBIENTE"
+        id: smoke
+        shell: bash
+        run: |
+          if bash infra/smoke.sh "$AMBIENTE"; then
+            exit 0
+          else
+            status=$?
+          fi
+
+          echo "::error::smoke falhou em $AMBIENTE; a reverter para a release anterior"
+          if ! bash infra/rollback.sh "$AMBIENTE"; then
+            echo "::error::rollback também falhou"
+          fi
+          exit "$status"
