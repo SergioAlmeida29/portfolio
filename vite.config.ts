@@ -3,7 +3,8 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: '/',
+  // os previews de PR são servidos em /pr/<n>/; o build normal fica na raiz
+  base: process.env.BASE_PATH ?? '/',
   plugins: [react(), tailwindcss()],
   build: {
     rollupOptions: {

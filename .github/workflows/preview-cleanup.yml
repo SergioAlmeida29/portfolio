@@ -1,0 +1,25 @@
+name: preview-cleanup
+
+on:
+  pull_request_target:
+    types: [closed]
+
+concurrency:
+  group: preview-deploy-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  apagar:
+    runs-on: [self-hosted, linux]
+    permissions:
+      contents: read
+    env:
+      N: ${{ github.event.pull_request.number }}
+    steps:
+      # Nunca fazer checkout do código do PR neste runner.
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: apagar o preview
+        run: bash infra/preview-apagar.sh "$N"

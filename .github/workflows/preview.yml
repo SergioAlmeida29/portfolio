@@ -1,0 +1,42 @@
+name: preview-build
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: preview-build-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  N: ${{ github.event.pull_request.number }}
+
+jobs:
+  construir:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: instalar deps
+        run: npm ci
+
+      - name: build com a base do preview
+        env:
+          BASE_PATH: /pr/${{ github.event.pull_request.number }}/
+          GITHUB_TOKEN: ${{ github.token }}
+        run: npm run build:staging
+
+      - name: guardar artifact do preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1

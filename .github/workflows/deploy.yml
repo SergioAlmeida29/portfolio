@@ -40,5 +40,25 @@ jobs:
 
       # o build verde só diz que compila; isto diz que o site responde
       - name: smoke
+        id: smoke
         if: github.event_name == 'push'
         run: bash infra/smoke.sh "$AMBIENTE"
+
+      # o que interessa saber de um deploy, sem ter de abrir os logs
+      - name: resumo
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        shell: bash
+        run: |
+          . infra/lib.sh
+          release="$(basename "$(readlink -f "$(base_de "$AMBIENTE")/current")")"
+          {
+            echo "## Deploy — $AMBIENTE"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| commit | \`$(git rev-parse --short HEAD)\` |"
+            echo "| release | \`$release\` |"
+            echo "| smoke | ${{ steps.smoke.outcome }} |"
+            echo
+            bash infra/tamanhos.sh "$AMBIENTE"
+          } >> "$GITHUB_STEP_SUMMARY"
