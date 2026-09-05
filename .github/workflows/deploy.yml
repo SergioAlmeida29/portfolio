@@ -11,9 +11,16 @@ concurrency:
 
 jobs:
   build:
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
 
       - name: instalar deps
         run: npm ci
@@ -25,6 +32,8 @@ jobs:
         run: npm run lint
 
       - name: build
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           if [ "$GITHUB_REF" = "refs/heads/dev" ]; then
             npm run build:staging
@@ -32,6 +41,34 @@ jobs:
             npm run build
           fi
 
-      - name: deploy
+      - name: guardar artifact do deploy
         if: github.event_name == 'push'
-        run: bash infra/deploy.sh ${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
+
+  publicar:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: [self-hosted, linux]
+    permissions:
+      contents: read
+    env:
+      AMBIENTE: ${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: obter artifact do deploy
+        uses: actions/download-artifact@v5
+        with:
+          name: deploy-dist
+          path: dist/
+
+      # mantém este job vermelho se a release nova ou o rollback falharem
+      - name: deploy e smoke com rollback
+        if: github.event_name == 'push'
+        id: smoke
+        run: bash infra/deploy-and-verify.sh "$AMBIENTE"

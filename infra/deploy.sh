@@ -7,34 +7,28 @@
 # Se algo falha antes do flip, o site atual fica intacto.
 set -euo pipefail
 
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
+
 ENV="${1:-prod}"
-case "$ENV" in
-  prod)    BASE="/var/www/sergioalmeida.dev" ;;
-  staging) BASE="/var/www/staging.sergioalmeida.dev" ;;
-  *) echo "uso: deploy.sh [prod|staging]" >&2; exit 2 ;;
-esac
+BASE="$(base_de "$ENV")" || { echo "uso: deploy.sh [prod|staging]" >&2; exit 2; }
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SHA="${GITHUB_SHA:-$(git -C "$REPO_DIR" rev-parse HEAD)}"
 KEEP=5
 
-# origem: dist/ se houver build, senão o index.html do repo (fase pré-scaffold)
-if [ -d "$REPO_DIR/dist" ]; then
-  SRC="$REPO_DIR/dist"
-else
-  SRC="$(mktemp -d)"
-  cp "$REPO_DIR/index.html" "$SRC/"
-fi
+[ -d "$REPO_DIR/dist" ] || { echo "sem dist/ para publicar — falta correr o build" >&2; exit 1; }
+[ -z "$(find "$REPO_DIR/dist" -type l -print -quit)" ] || {
+  echo "dist/ contem symlink — publicação recusada" >&2
+  exit 1
+}
 
 REL="$BASE/releases/$SHA"
 mkdir -p "$REL"
-rsync -rlt --delete "$SRC/" "$REL/"
+rsync -rlt --delete "$REPO_DIR/dist/" "$REL/"
 # garantir que o nginx (www-data) consegue ler tudo
 chmod -R a=rX,u+w "$REL"
 
-# flip atómico do symlink
-ln -sfn "$REL" "$BASE/current.tmp"
-mv -T "$BASE/current.tmp" "$BASE/current"
+apontar "$BASE" "$REL"
 echo "-> $ENV agora em releases/$SHA"
 
 # limpar releases antigas (manter as KEEP mais recentes)
