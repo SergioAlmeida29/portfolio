@@ -32,6 +32,8 @@ jobs:
         run: npm run lint
 
       - name: build
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           if [ "$GITHUB_REF" = "refs/heads/dev" ]; then
             npm run build:staging
