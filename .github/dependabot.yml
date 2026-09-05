@@ -1,0 +1,28 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # a main só recebe promoção de dev, nunca PRs directos
+    target-branch: dev
+    open-pull-requests-limit: 5
+    labels: [infra, 'prioridade: baixa']
+    commit-message:
+      prefix: chore
+    groups:
+      production-dependencies:
+        dependency-type: production
+      dev-dependencies:
+        dependency-type: development
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    target-branch: dev
+    open-pull-requests-limit: 5
+    labels: [infra, 'prioridade: baixa']
+    commit-message:
+      prefix: chore
