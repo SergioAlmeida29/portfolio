@@ -42,8 +42,7 @@ jobs:
           # numa pasta própria e o flip do symlink atómico
           export RELEASE_ID="$(git rev-parse --short HEAD)-$(date -u +%Y%m%d%H%M)"
           npm run build
-          bash infra/deploy.sh prod
-          bash infra/smoke.sh prod
+          bash infra/deploy-and-verify.sh prod
 
           {
             echo "## Números do GitHub actualizados"
