@@ -47,6 +47,9 @@ export function Skills() {
           {stack.map(({ label, Icon }) => (
             <span
               key={label}
+              // o ícone é a única coisa que representa a tecnologia: sem role o
+              // aria-label é ignorado e a lista fica muda para um leitor de ecrã
+              role="img"
               title={label}
               aria-label={label}
               className="text-muted transition-colors hover:text-fg"
