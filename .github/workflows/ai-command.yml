@@ -1,0 +1,49 @@
+name: ai-command
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  responder:
+    if: contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: instalar opencode
+        run: |
+          bash "$GITHUB_WORKSPACE/.github/scripts/install-opencode.sh"
+          echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
+
+      - name: responder ao pedido
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ALVO="$(jq -r '.issue.number // .pull_request.number // empty' "$GITHUB_EVENT_PATH")"
+          pedido="$(jq -r '.comment.body' "$GITHUB_EVENT_PATH")"
+          export ALVO
+
+          PROMPT="Responde ao pedido abaixo. Inspecciona o código local; não alteres ficheiros nem publiques comentários. Devolve apenas a resposta final, em português europeu.
+
+          $(cat "$GITHUB_WORKSPACE/.github/scripts/contexto.md")
+
+          Alvo: #$ALVO
+          Pedido:
+          $pedido"
+          export PROMPT
+
+          resposta="$(bash "$GITHUB_WORKSPACE/.github/scripts/run-com-fallback.sh")"
+          jq -n --arg body "$resposta" '{body: $body}' \
+            | gh api "repos/$GITHUB_REPOSITORY/issues/$ALVO/comments" -X POST --input - >/dev/null
+          echo "Resposta publicada."

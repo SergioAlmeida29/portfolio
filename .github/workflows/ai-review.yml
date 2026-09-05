@@ -1,0 +1,72 @@
+name: ai-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      # profundidade completa: sem ela não há base contra a qual comparar e o
+      # modelo revê o ficheiro inteiro em vez da mudança
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: instalar opencode
+        run: |
+          bash "$GITHUB_WORKSPACE/.github/scripts/install-opencode.sh"
+          echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
+
+      - name: rever o pull request
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALVO: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          PROMPT="Revê o pull request #$ALVO inspeccionando o diff local. Não alteres ficheiros nem publiques comentários: devolve apenas a resposta final da revisão.
+
+          O diff está em: git diff $BASE_SHA...HEAD
+
+          $(cat "$GITHUB_WORKSPACE/.github/scripts/contexto.md")
+
+          Revê em silêncio e responde uma só vez, no fim.
+
+          Regra de prova, acima de todas as outras: antes de apontares seja o que for,
+          cita a linha exacta do diff que o demonstra. Se não a conseguires citar, não
+          apontes. Não apontes nada que não esteja no diff, e lê o que o código faz e
+          não o que parece — por exemplo, \$(cat ficheiro) dentro de uma string é
+          leitura do ficheiro, não uma cópia do seu conteúdo. Um comentário errado
+          custa mais do que um silêncio.
+
+          Aponta apenas o que precisa de correcção antes do merge:
+          - bugs reais e problemas de qualidade;
+          - violações de segurança, arquitectura e comportamento das regras permanentes acima;
+            formatação e estilo são responsabilidade do oxlint, não desta revisão;
+          - regressões de performance: trabalho por frame, listeners sem limpeza, imagens ou
+            modelos sem limite de tamanho, dependência nova que engorde o bundle;
+          - regressões de acessibilidade: contraste, foco visível, ordem de tabulação, texto
+            alternativo, movimento sem respeitar prefers-reduced-motion;
+          - conteúdo escrito à mão que devia sair de src/content/.
+
+          Se houver problemas: um único comentário específico — ficheiro, linha, problema e
+          sugestão concreta. Em português europeu, sem resumo do diff e sem elogios.
+          Se estiver tudo bem: responde apenas «Tudo bem.», uma linha."
+          export PROMPT
+
+          resposta="$(bash "$GITHUB_WORKSPACE/.github/scripts/run-com-fallback.sh")"
+          jq -n --arg body "$resposta" '{body: $body}' \
+            | gh api "repos/$GITHUB_REPOSITORY/issues/$ALVO/comments" -X POST --input - >/dev/null
+          echo "Revisao publicada."
