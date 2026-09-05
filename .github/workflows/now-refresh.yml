@@ -1,0 +1,55 @@
+name: now-refresh
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+# o mesmo grupo do deploy de produção: um deploy a sério supera um refresh de
+# números, e o cancel-in-progress do deploy.yml trata disso
+concurrency:
+  group: deploy-refs/heads/main
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: [self-hosted, linux]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: instalar deps
+        run: npm ci
+
+      - name: recolher os numeros do github
+        env:
+          # o token do próprio job chega para o limite da Search API
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/now.mjs
+
+      - name: publicar se mudaram
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet src/content/now.generated.ts; then
+            echo 'Números iguais aos da última recolha — nada publicado.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # sem commit novo o SHA repetia-se; o RELEASE_ID mantém cada publicação
+          # numa pasta própria e o flip do symlink atómico
+          export RELEASE_ID="$(git rev-parse --short HEAD)-$(date -u +%Y%m%d%H%M)"
+          npm run build
+          bash infra/deploy-and-verify.sh prod
+
+          {
+            echo "## Números do GitHub actualizados"
+            echo
+            echo "Release \`$RELEASE_ID\` em produção."
+            echo
+            echo '```diff'
+            git diff --no-color -- src/content/now.generated.ts
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

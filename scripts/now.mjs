@@ -99,9 +99,28 @@ async function merged() {
 }
 
 function write(data) {
+  let output = data
+
+  try {
+    const source = readFileSync(OUT, 'utf8')
+    const match = source.match(/^export const now = ([\s\S]+) as const\s*$/)
+    const previous = match && JSON.parse(match[1])
+
+    if (previous) {
+      const previousValues = { ...previous }
+      const currentValues = { ...data }
+      delete previousValues.collectedAt
+      delete currentValues.collectedAt
+
+      if (JSON.stringify(previousValues) === JSON.stringify(currentValues)) {
+        output = { ...data, collectedAt: previous.collectedAt }
+      }
+    }
+  } catch {}
+
   writeFileSync(
     OUT,
-    `export const now = ${JSON.stringify(data, null, 2)} as const\n`,
+    `export const now = ${JSON.stringify(output, null, 2)} as const\n`,
   )
 }
 
