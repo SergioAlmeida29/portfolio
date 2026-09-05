@@ -1,0 +1,62 @@
+name: quality
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: instalar deps
+        run: npm ci
+
+      # um build só: as quatro verificações seguintes correm todas sobre este dist/
+      - name: build
+        env:
+          # o scripts/now.mjs consulta a API do GitHub; sem token bate no limite
+          GITHUB_TOKEN: ${{ github.token }}
+        run: npm run build
+
+      - name: instalar o chromium do playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: playwright e axe
+        run: npm run test:e2e
+
+      - name: relatorio do playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      # por último: é o passo mais lento e o único cujo número depende da máquina
+      - name: lighthouse
+        run: npx lhci autorun
+
+      # o dist/index.html em vez do da raiz: é o que é servido, já referencia os
+      # bundles, e o --root-dir dá ao lychee como resolver os links absolutos
+      # locais como /favicon.svg
+      - name: links mortos
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress --max-concurrency 4
+            --root-dir ${{ github.workspace }}/dist
+            'src/content/*.ts' 'dist/index.html'
+          fail: true
