@@ -1,0 +1,79 @@
+name: preview-publish
+
+on:
+  workflow_run:
+    workflows: [preview-build]
+    types: [completed]
+
+concurrency:
+  group: preview-publish-${{ github.event.workflow_run.id }}
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.pull_requests[0].number != null
+    runs-on: [self-hosted, linux]
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+    env:
+      N: ${{ github.event.workflow_run.pull_requests[0].number }}
+      COMMIT: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      # Este workflow é privilegiado: usa apenas scripts da main, nunca o PR.
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: obter artifact do preview
+        uses: actions/download-artifact@v5
+        with:
+          name: preview-dist
+          path: dist/
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: validar artifact
+        shell: bash
+        run: |
+          case "$N" in
+            ''|*[!0-9]*) echo "numero de PR invalido: $N" >&2; exit 2 ;;
+          esac
+          test -f dist/index.html
+
+      - name: publicar
+        run: bash infra/deploy.sh "preview:$N"
+
+      - name: smoke
+        run: bash infra/smoke.sh "preview:$N"
+
+      - name: comentar o url
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          corpo="$(printf '<!-- preview -->\n**Preview:** https://staging.sergioalmeida.dev/pr/%s/\n\nCommit `%s`. Atrás do Cloudflare Access, como o staging.' \
+            "$N" "${COMMIT:0:7}")"
+          api="${GITHUB_API_URL:-https://api.github.com}"
+          headers=(-H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN")
+          id="$(curl --fail --silent --show-error "${headers[@]}" \
+            "$api/repos/$GITHUB_REPOSITORY/issues/$N/comments" \
+            | jq -r '[.[] | select(.body | startswith("<!-- preview -->")) | .id] | first // empty')"
+
+          if [ -n "$id" ]; then
+            alvo="repos/$GITHUB_REPOSITORY/issues/comments/$id"
+            metodo=PATCH
+          else
+            alvo="repos/$GITHUB_REPOSITORY/issues/$N/comments"
+            metodo=POST
+          fi
+
+          jq -n --arg body "$corpo" '{body: $body}' | \
+            curl --fail --silent --show-error "${headers[@]}" \
+            -H "Content-Type: application/json" -X "$metodo" \
+            --data-binary @- "$api/$alvo" >/dev/null
