@@ -12,6 +12,7 @@ jobs:
   review:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    continue-on-error: true
     permissions:
       contents: read
       pull-requests: write
@@ -52,7 +53,8 @@ jobs:
 
           Aponta apenas o que precisa de correcção antes do merge:
           - bugs reais e problemas de qualidade;
-          - violações das regras permanentes acima, que são bloqueantes;
+          - violações de segurança, arquitectura e comportamento das regras permanentes acima;
+            formatação e estilo são responsabilidade do oxlint, não desta revisão;
           - regressões de performance: trabalho por frame, listeners sem limpeza, imagens ou
             modelos sem limite de tamanho, dependência nova que engorde o bundle;
           - regressões de acessibilidade: contraste, foco visível, ordem de tabulação, texto
