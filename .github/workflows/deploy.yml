@@ -47,6 +47,22 @@ jobs:
         if: github.event_name == 'pull_request'
         run: bash infra/deploy-preview.sh ${{ github.event.number }}
 
+      - name: testar resposta do nginx na preview
+        if: github.event_name == 'pull_request'
+        run: |
+          PR="${{ github.event.number }}"
+          echo "=== 1. Testar /pr/${PR}/ ==="
+          curl -s -i "http://127.0.0.1/pr/${PR}/" -H "Host: staging.sergioalmeida.dev" | head -n 30
+          
+          echo "=== 2. Encontrar caminhos de assets no index.html ==="
+          cat "/var/www/staging.sergioalmeida.dev/pr/${PR}/index.html"
+          
+          JS_PATH=$(grep -o "/pr/${PR}/assets/[^\"']*\.js" "/var/www/staging.sergioalmeida.dev/pr/${PR}/index.html" | head -1)
+          if [ -n "$JS_PATH" ]; then
+            echo "=== 3. Testar JS ($JS_PATH) ==="
+            curl -s -i "http://127.0.0.1${JS_PATH}" -H "Host: staging.sergioalmeida.dev" | head -n 20
+          fi
+
       - name: comentar URL da preview no PR
         if: github.event_name == 'pull_request'
         env:
