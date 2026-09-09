@@ -29,19 +29,19 @@ nginx_changed=0
 # snippet comum
 COMMON_SRC="$REPO_DIR/infra/nginx/snippets/sergioalmeida-common.conf"
 COMMON_DST="/etc/nginx/snippets/sergioalmeida-common.conf"
-if ! sudo diff -q "$COMMON_SRC" "$COMMON_DST" &>/dev/null 2>&1; then
+if ! diff -q "$COMMON_SRC" "$COMMON_DST" &>/dev/null 2>&1; then
   sudo cp "$COMMON_SRC" "$COMMON_DST"
   nginx_changed=1
 fi
 
 # snippet de previews
-if ! sudo diff -q "$SNIPPET_SRC" "$SNIPPET_DST" &>/dev/null 2>&1; then
+if ! diff -q "$SNIPPET_SRC" "$SNIPPET_DST" &>/dev/null 2>&1; then
   sudo cp "$SNIPPET_SRC" "$SNIPPET_DST"
   nginx_changed=1
 fi
 
 # vhost em sites-available
-if ! sudo diff -q "$VHOST_SRC" "$VHOST_DST" &>/dev/null 2>&1; then
+if ! diff -q "$VHOST_SRC" "$VHOST_DST" &>/dev/null 2>&1; then
   sudo cp "$VHOST_SRC" "$VHOST_DST"
   nginx_changed=1
 fi
@@ -50,7 +50,7 @@ fi
 if [ -e "$VHOST_ENABLED" ]; then
   if [ ! -L "$VHOST_ENABLED" ]; then
     # Se for ficheiro regular copiado em vez de symlink
-    if ! sudo diff -q "$VHOST_SRC" "$VHOST_ENABLED" &>/dev/null 2>&1; then
+    if ! diff -q "$VHOST_SRC" "$VHOST_ENABLED" &>/dev/null 2>&1; then
       sudo cp "$VHOST_SRC" "$VHOST_ENABLED"
       nginx_changed=1
     fi

@@ -54,21 +54,46 @@ jobs:
           echo "=== 1. Ficheiros em /var/www/staging.sergioalmeida.dev/pr/${PR}/assets/ ==="
           ls -la "/var/www/staging.sergioalmeida.dev/pr/${PR}/assets/"
           
-          echo "=== 2. Testar CSS com curl ==="
+          echo "=== 2. Testar CSS com curl (normal e com barra no fim) ==="
           CSS_FILE=$(ls "/var/www/staging.sergioalmeida.dev/pr/${PR}/assets/"*.css | head -1 | xargs -n1 basename)
-          curl -s -i "http://127.0.0.1/pr/${PR}/assets/${CSS_FILE}" -H "Host: staging.sergioalmeida.dev" | head -n 25
+          echo "--- CSS sem barra: ---"
+          curl -s -i "http://127.0.0.1/pr/${PR}/assets/${CSS_FILE}" -H "Host: staging.sergioalmeida.dev" > /tmp/css_normal.txt
+          head -n 12 /tmp/css_normal.txt
+          grep -q "200 OK" /tmp/css_normal.txt || { echo "ERRO: CSS sem barra não devolveu 200"; exit 1; }
           
-          echo "=== 3. Testar Motion JS com curl ==="
+          echo "--- CSS com barra no fim: ---"
+          curl -s -i "http://127.0.0.1/pr/${PR}/assets/${CSS_FILE}/" -H "Host: staging.sergioalmeida.dev" > /tmp/css_slash.txt
+          head -n 12 /tmp/css_slash.txt
+          grep -q "200 OK" /tmp/css_slash.txt || { echo "ERRO: CSS com barra não devolveu 200"; exit 1; }
+          
+          echo "=== 3. Testar Motion JS com curl (normal e com barra) ==="
           MOTION_FILE=$(ls "/var/www/staging.sergioalmeida.dev/pr/${PR}/assets/"motion-*.js 2>/dev/null | head -1 | xargs -n1 basename || echo "")
           if [ -n "$MOTION_FILE" ]; then
-            curl -s -i "http://127.0.0.1/pr/${PR}/assets/${MOTION_FILE}" -H "Host: staging.sergioalmeida.dev" | head -n 25
+            echo "--- Motion JS sem barra: ---"
+            curl -s -i "http://127.0.0.1/pr/${PR}/assets/${MOTION_FILE}" -H "Host: staging.sergioalmeida.dev" > /tmp/motion_normal.txt
+            head -n 12 /tmp/motion_normal.txt
+            grep -q "200 OK" /tmp/motion_normal.txt || { echo "ERRO: Motion JS sem barra não devolveu 200"; exit 1; }
+
+            echo "--- Motion JS com barra: ---"
+            curl -s -i "http://127.0.0.1/pr/${PR}/assets/${MOTION_FILE}/" -H "Host: staging.sergioalmeida.dev" > /tmp/motion_slash.txt
+            head -n 12 /tmp/motion_slash.txt
+            grep -q "200 OK" /tmp/motion_slash.txt || { echo "ERRO: Motion JS com barra não devolveu 200"; exit 1; }
           fi
+
+          echo "=== 4. Testar redirecionamento de /pr/${PR} para /pr/${PR}/ ==="
+          curl -s -i "http://127.0.0.1/pr/${PR}" -H "Host: staging.sergioalmeida.dev" > /tmp/pr_redir.txt
+          head -n 12 /tmp/pr_redir.txt
+          grep -q "301" /tmp/pr_redir.txt || { echo "ERRO: /pr/${PR} não deu 301"; exit 1; }
+          if grep -qi "Location: http://" /tmp/pr_redir.txt; then
+            echo "ERRO: Redirecionamento gerou URL absoluto com http://"
+            exit 1
+          fi
+
+          echo "=== 5. Últimos acessos no Nginx ==="
+          tail -n 25 /var/log/nginx/staging.sergioalmeida.dev.access.log 2>/dev/null || echo "sem access.log"
           
-          echo "=== 4. Últimos acessos no Nginx (staging.sergioalmeida.dev.access.log) ==="
-          sudo tail -n 40 /var/log/nginx/staging.sergioalmeida.dev.access.log 2>/dev/null || echo "sem access.log"
-          
-          echo "=== 5. Últimos erros no Nginx (staging.sergioalmeida.dev.error.log) ==="
-          sudo tail -n 20 /var/log/nginx/staging.sergioalmeida.dev.error.log 2>/dev/null || echo "sem error.log"
+          echo "=== 6. Últimos erros no Nginx ==="
+          tail -n 15 /var/log/nginx/staging.sergioalmeida.dev.error.log 2>/dev/null || echo "sem error.log"
 
       - name: comentar URL da preview no PR
         if: github.event_name == 'pull_request'
