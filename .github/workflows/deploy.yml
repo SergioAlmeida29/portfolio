@@ -50,15 +50,27 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.number }}
+          REPO: ${{ github.repository }}
         run: |
           URL="https://staging.sergioalmeida.dev/pr/${PR}/"
           BODY="**Preview:** [${URL}](${URL})"
-          # atualizar comentário existente ou criar novo
-          COMMENT_ID=$(gh pr view "$PR" --json comments \
-            --jq '[.comments[] | select(.body | startswith("**Preview:**"))] | last | .databaseId // empty')
+          API="https://api.github.com/repos/${REPO}"
+          AUTH="Authorization: Bearer ${GH_TOKEN}"
+          # procurar comentário existente com o mesmo prefixo
+          COMMENT_ID=$(curl -fsSL -H "$AUTH" \
+            "${API}/issues/${PR}/comments?per_page=100" | \
+            python3 -c "
+import json,sys
+cs=json.load(sys.stdin)
+found=[c['id'] for c in cs if c['body'].startswith('**Preview:**')]
+print(found[-1] if found else '')
+          ")
           if [ -n "$COMMENT_ID" ]; then
-            gh api "repos/{owner}/{repo}/issues/comments/${COMMENT_ID}" \
-              -X PATCH -f body="$BODY" > /dev/null
+            curl -fsSL -X PATCH -H "$AUTH" -H "Content-Type: application/json" \
+              -d "{\"body\":\"${BODY}\"}" \
+              "${API}/issues/comments/${COMMENT_ID}" > /dev/null
           else
-            gh pr comment "$PR" --body "$BODY"
+            curl -fsSL -X POST -H "$AUTH" -H "Content-Type: application/json" \
+              -d "{\"body\":\"${BODY}\"}" \
+              "${API}/issues/${PR}/comments" > /dev/null
           fi
