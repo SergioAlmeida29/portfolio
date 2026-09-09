@@ -64,8 +64,11 @@ jobs:
             curl -s -i "http://127.0.0.1/pr/${PR}/assets/${MOTION_FILE}" -H "Host: staging.sergioalmeida.dev" | head -n 25
           fi
           
-          echo "=== 4. Configuração do Nginx ativa para staging ==="
-          sudo nginx -T 2>/dev/null | grep -A 35 "server_name staging.sergioalmeida.dev;"
+          echo "=== 4. Últimos acessos no Nginx (staging.sergioalmeida.dev.access.log) ==="
+          sudo tail -n 40 /var/log/nginx/staging.sergioalmeida.dev.access.log 2>/dev/null || echo "sem access.log"
+          
+          echo "=== 5. Últimos erros no Nginx (staging.sergioalmeida.dev.error.log) ==="
+          sudo tail -n 20 /var/log/nginx/staging.sergioalmeida.dev.error.log 2>/dev/null || echo "sem error.log"
 
       - name: comentar URL da preview no PR
         if: github.event_name == 'pull_request'
