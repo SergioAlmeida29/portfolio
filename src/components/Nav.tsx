@@ -1,6 +1,7 @@
 import { motion, useReducedMotion, useScroll } from 'motion/react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useContent } from '../content'
+import { cvUrl } from '../lib/base'
 import { isPreview } from '../lib/preview'
 import { LangToggle } from './LangToggle'
 import { GlassPanel } from './ui/glass-panel'
@@ -31,7 +32,7 @@ function DefaultNav() {
             </a>
           ))}
           <a
-            href="/Sergio-Almeida-CV.pdf"
+            href={cvUrl}
             target="_blank"
             rel="noreferrer"
             className="hidden text-muted transition-colors hover:text-fg sm:inline"

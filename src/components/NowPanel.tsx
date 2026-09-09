@@ -32,9 +32,12 @@ export function NowPanel() {
             <dl className="now-stats mt-6 space-y-3">
               {stats.map((stat) => (
                 <div key={stat.label} className="now-stat flex items-baseline gap-3">
-                  <dt className="flex flex-1 items-center gap-3 text-sm text-muted before:h-px before:flex-1 before:bg-white/[0.08]">{stat.label}</dt>
-                  <dd className="order-first font-mono text-2xl tabular-nums leading-none text-fg">
-                    {stat.value}
+                  <dt className="order-2 text-sm text-muted">{stat.label}</dt>
+                  <dd className="order-1 flex flex-1 items-baseline gap-3">
+                    <span className="font-mono text-2xl tabular-nums leading-none text-fg">
+                      {stat.value}
+                    </span>
+                    <span aria-hidden className="h-px flex-1 bg-white/[0.08]" />
                   </dd>
                 </div>
               ))}
