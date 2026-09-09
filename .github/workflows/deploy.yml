@@ -27,8 +27,8 @@ jobs:
       - name: build
         run: |
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            # preview: base path /pr/<N>/ para que os assets e isPreview funcionem
-            node scripts/now.mjs && tsc -b && \
+            # preview: base path /pr/<N>/ — typecheck e lint já correram
+            node scripts/now.mjs && \
               npx vite build --mode staging --base "/pr/${{ github.event.number }}/" && \
               node scripts/robots.mjs
           elif [ "$GITHUB_REF" = "refs/heads/dev" ]; then
