@@ -7,6 +7,7 @@ import {
 import { useContent } from '../content'
 import { Reveal } from './ui/reveal'
 import { WordReveal } from './ui/word-reveal'
+import { GlassPanel } from './ui/glass-panel'
 
 const socials = [
   {
@@ -32,7 +33,7 @@ export function Contact() {
         </h2>
 
         <Reveal delay={0.1}>
-          <div className="glass mt-12 rounded-xl p-8 md:p-12">
+          <GlassPanel emptyBackdrop defer className="glass mt-12 rounded-xl p-8 md:p-12">
             <a
               href={`mailto:${contact.email}`}
               className="group inline-flex items-center gap-3 text-xl tracking-tight text-fg transition-colors hover:text-accent sm:text-3xl"
@@ -42,7 +43,7 @@ export function Contact() {
                 stroke={1.5}
                 className="shrink-0 text-muted transition-colors group-hover:text-accent"
               />
-              {contact.email}
+              <span className="contact-email">{contact.email}</span>
             </a>
 
             <div className="mt-10 flex flex-wrap items-center gap-3">
@@ -76,7 +77,7 @@ export function Contact() {
               />
               {contact.location}
             </p>
-          </div>
+          </GlassPanel>
         </Reveal>
       </div>
     </section>

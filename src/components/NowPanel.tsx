@@ -3,6 +3,7 @@ import { useContent, useLang } from '../content'
 import { now } from '../content/now.generated'
 import { fullDate } from '../lib/date'
 import { Reveal } from './ui/reveal'
+import { GlassPanel } from './ui/glass-panel'
 
 export function NowPanel() {
   const { now: t } = useContent()
@@ -18,8 +19,8 @@ export function NowPanel() {
 
   return (
     <Reveal delay={0.42}>
-      <div className="glass rounded-xl p-6 sm:p-7">
-        <div className="flex items-baseline justify-between gap-4">
+      <GlassPanel emptyBackdrop className="now-card glass rounded-xl p-6 sm:p-7">
+        <div className="now-heading flex items-baseline justify-between gap-4">
           <h2 className="text-base font-medium tracking-tight">{t.title}</h2>
           <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
             {t.window}
@@ -28,21 +29,19 @@ export function NowPanel() {
 
         {collected ? (
           <>
-            <dl className="mt-6 space-y-3">
+            <dl className="now-stats mt-6 space-y-3">
               {stats.map((stat) => (
-                <div key={stat.label} className="flex items-baseline gap-3">
-                  <dt className="sr-only">{stat.label}</dt>
-                  <dd className="font-mono text-2xl tabular-nums leading-none text-fg">
+                <div key={stat.label} className="now-stat flex items-baseline gap-3">
+                  <dt className="flex flex-1 items-center gap-3 text-sm text-muted before:h-px before:flex-1 before:bg-white/[0.08]">{stat.label}</dt>
+                  <dd className="order-first font-mono text-2xl tabular-nums leading-none text-fg">
                     {stat.value}
                   </dd>
-                  <span aria-hidden className="h-px flex-1 bg-white/[0.08]" />
-                  <span className="text-sm text-muted">{stat.label}</span>
                 </div>
               ))}
             </dl>
 
             {now.repos.length > 0 && (
-              <p className="mt-6 text-sm leading-relaxed text-muted">
+              <p className="now-repos mt-6 text-sm leading-relaxed text-muted">
                 {t.reposLabel}{' '}
                 {now.repos.map((repo, index) => (
                   <span key={repo}>
@@ -64,7 +63,7 @@ export function NowPanel() {
           <p className="mt-6 text-sm text-muted">{t.unavailable}</p>
         )}
 
-        <p className="mt-7 border-t border-white/[0.07] pt-5 text-sm leading-relaxed text-fg/85">
+        <p className="now-status mt-7 border-t border-white/[0.07] pt-5 text-sm leading-relaxed text-fg/85">
           <span
             aria-hidden
             className="mr-2 inline-block size-1.5 -translate-y-px rounded-full bg-accent align-middle"
@@ -73,12 +72,12 @@ export function NowPanel() {
         </p>
 
         {collected && (
-          <p className="mt-4 flex items-center gap-1.5 font-mono text-[11px] text-muted">
-            <IconBrandGithub size={13} stroke={1.75} aria-hidden />
+          <p className="now-updated mt-4 flex items-center gap-1.5 font-mono text-[11px] text-muted">
+            <IconBrandGithub className="shrink-0" size={13} stroke={1.75} aria-hidden />
             {t.updated} {collected}
           </p>
         )}
-      </div>
+      </GlassPanel>
     </Reveal>
   )
 }

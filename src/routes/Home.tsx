@@ -6,7 +6,6 @@ import { Hero } from '../components/Hero'
 import { Internships } from '../components/Internships'
 import { Projects } from '../components/Projects'
 import { Skills } from '../components/Skills'
-
 export function Home() {
   return (
     <>

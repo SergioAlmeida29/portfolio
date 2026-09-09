@@ -15,6 +15,13 @@ void main(){
   float ar = u_res.x / u_res.y;
   vec2 st = vec2(uv.x * ar, uv.y);
 
+  vec2 d = (uv - vec2(0.5, 0.86)) / vec2(1.35, 1.0);
+  float mask = 1.0 - smoothstep(0.20, 0.80, length(d));
+  if (mask == 0.0) {
+    gl_FragColor = vec4(0.0);
+    return;
+  }
+
   float perto = exp(-distance(st, vec2(u_mouse.x * ar, u_mouse.y)) * 3.4) * u_hover;
 
   vec2 p = mod(st * 5.5, 6.2831853) - 250.0;
@@ -31,9 +38,6 @@ void main(){
   c /= 5.0;
   c = 1.17 - pow(c, 1.35);
   float luz = pow(abs(c), 7.0);
-
-  vec2 d = (uv - vec2(0.5, 0.86)) / vec2(1.35, 1.0);
-  float mask = 1.0 - smoothstep(0.20, 0.80, length(d));
 
   float a = clamp(luz * mask * (0.42 + perto * 0.3), 0.0, 0.5);
   vec3 tint = mix(vec3(0.247, 0.663, 0.878), vec3(0.686, 0.886, 1.0), luz);
@@ -57,7 +61,7 @@ function compile(gl: WebGLRenderingContext, type: number, src: string) {
   return shader
 }
 
-export function Water() {
+export function Water({ className }: { className?: string }) {
   const ref = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -114,8 +118,10 @@ export function Water() {
 
     function resize() {
       const dpr = Math.min(devicePixelRatio || 1, 1.25)
-      canvas.width = Math.round(innerWidth * dpr)
-      canvas.height = Math.round(innerHeight * dpr)
+      const width = Math.round(innerWidth * dpr)
+      const height = Math.round(innerHeight * dpr)
+      if (canvas.width !== width) canvas.width = width
+      if (canvas.height !== height) canvas.height = height
       gl.viewport(0, 0, canvas.width, canvas.height)
       gl.uniform2f(uRes, canvas.width, canvas.height)
     }
@@ -181,7 +187,9 @@ export function Water() {
     <canvas
       ref={ref}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 -z-[3] h-full w-full"
+      className={
+        className ?? 'pointer-events-none fixed inset-0 -z-[3] h-full w-full'
+      }
     />
   )
 }

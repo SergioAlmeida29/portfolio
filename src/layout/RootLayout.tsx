@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react'
 import { Nav } from '../components/Nav'
 import { SiteFooter } from '../components/SiteFooter'
+import { SmoothScroll } from '../components/ui/smooth-scroll'
 import { Water } from '../components/ui/water'
 import { useContent } from '../content'
+import { isPreview } from '../lib/preview'
 
 const isStaging = import.meta.env.VITE_APP_ENV === 'staging'
 
@@ -24,6 +26,7 @@ export function RootLayout({ children }: { children: ReactNode }) {
         </div>
       )}
 
+      {isPreview && <SmoothScroll />}
       <Water />
       <Nav />
       <main id="main">
