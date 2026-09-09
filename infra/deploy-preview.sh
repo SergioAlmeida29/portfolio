@@ -26,6 +26,14 @@ VHOST_ENABLED="/etc/nginx/sites-enabled/staging.sergioalmeida.dev.conf"
 
 nginx_changed=0
 
+# snippet comum
+COMMON_SRC="$REPO_DIR/infra/nginx/snippets/sergioalmeida-common.conf"
+COMMON_DST="/etc/nginx/snippets/sergioalmeida-common.conf"
+if ! sudo diff -q "$COMMON_SRC" "$COMMON_DST" &>/dev/null 2>&1; then
+  sudo cp "$COMMON_SRC" "$COMMON_DST"
+  nginx_changed=1
+fi
+
 # snippet de previews
 if ! sudo diff -q "$SNIPPET_SRC" "$SNIPPET_DST" &>/dev/null 2>&1; then
   sudo cp "$SNIPPET_SRC" "$SNIPPET_DST"
