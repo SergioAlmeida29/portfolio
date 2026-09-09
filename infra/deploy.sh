@@ -13,8 +13,10 @@ ENV="${1:-prod}"
 BASE="$(base_de "$ENV")" || { echo "uso: deploy.sh [prod|staging]" >&2; exit 2; }
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SHA="${GITHUB_SHA:-$(git -C "$REPO_DIR" rev-parse HEAD)}"
+RELEASE="${RELEASE_ID:-${GITHUB_SHA:-$(git -C "$REPO_DIR" rev-parse HEAD)}}"
 KEEP=5
+
+sync_nginx "$ENV" "$REPO_DIR"
 
 [ -d "$REPO_DIR/dist" ] || { echo "sem dist/ para publicar — falta correr o build" >&2; exit 1; }
 [ -z "$(find "$REPO_DIR/dist" -type l -print -quit)" ] || {
@@ -22,14 +24,14 @@ KEEP=5
   exit 1
 }
 
-REL="$BASE/releases/$SHA"
+REL="$BASE/releases/$RELEASE"
 mkdir -p "$REL"
 rsync -rlt --delete "$REPO_DIR/dist/" "$REL/"
 # garantir que o nginx (www-data) consegue ler tudo
 chmod -R a=rX,u+w "$REL"
 
 apontar "$BASE" "$REL"
-echo "-> $ENV agora em releases/$SHA"
+echo "-> $ENV agora em releases/$RELEASE"
 
 # limpar releases antigas (manter as KEEP mais recentes)
 cd "$BASE/releases"

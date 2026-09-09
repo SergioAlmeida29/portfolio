@@ -4,13 +4,17 @@ on:
   issues:
     types: [opened]
   pull_request:
-    types: [opened, edited]
+    types: [opened]
   workflow_dispatch:
     inputs:
       numero:
         description: 'Número do issue ou PR a triar'
         required: true
         type: number
+
+concurrency:
+  group: ai-triage-${{ github.event.issue.number || github.event.pull_request.number || inputs.numero }}
+  cancel-in-progress: false
 
 jobs:
   triage:
@@ -25,11 +29,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: instalar opencode
-        run: |
-          bash "$GITHUB_WORKSPACE/.github/scripts/install-opencode.sh"
-          echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
-
       - name: resolver número alvo
         env:
           NUMERO_INPUT: ${{ inputs.numero }}
@@ -42,7 +41,28 @@ jobs:
           fi
           echo "ALVO=$n" >> "$GITHUB_ENV"
 
+      - name: verificar etiquetas existentes
+        id: check
+        if: github.event_name != 'workflow_dispatch'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING="$(gh api "repos/$GITHUB_REPOSITORY/issues/$ALVO/labels" --jq '.[].name' 2>/dev/null || true)"
+          if [ -n "$EXISTING" ]; then
+            echo "Alvo #$ALVO já tem etiquetas ($EXISTING) — triagem ignorada."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: instalar opencode
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          bash "$GITHUB_WORKSPACE/.github/scripts/install-opencode.sh"
+          echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
+
       - name: aplicar etiquetas
+        if: steps.check.outputs.skip != 'true'
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

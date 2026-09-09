@@ -1,4 +1,5 @@
 import { useContent } from '../content'
+import { baseUrl } from '../lib/base'
 
 export function NotFound() {
   const { notFound } = useContent()
@@ -12,7 +13,7 @@ export function NotFound() {
         {notFound.title}
       </h1>
       <a
-        href="/"
+        href={baseUrl}
         className="glass-soft mt-8 inline-flex items-center rounded-full px-5 py-2.5 text-sm font-medium transition hover:border-white/20 hover:bg-white/[0.07]"
       >
         {notFound.back}

@@ -1,5 +1,6 @@
 import { motion, useScroll } from 'motion/react'
 import { useContent } from '../content'
+import { cvUrl } from '../lib/base'
 import { LangToggle } from './LangToggle'
 
 export function Nav() {
@@ -24,7 +25,7 @@ export function Nav() {
             </a>
           ))}
           <a
-            href="/Sergio-Almeida-CV.pdf"
+            href={cvUrl}
             target="_blank"
             rel="noreferrer"
             className="hidden text-muted transition-colors hover:text-fg sm:inline"
