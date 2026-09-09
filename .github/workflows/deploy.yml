@@ -27,7 +27,6 @@ jobs:
       - name: build
         run: |
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            # preview: base path /pr/<N>/ — typecheck e lint já correram
             node scripts/now.mjs && \
               npx vite build --mode staging --base "/pr/${{ github.event.number }}/" && \
               node scripts/robots.mjs
@@ -56,21 +55,12 @@ jobs:
           BODY="**Preview:** [${URL}](${URL})"
           API="https://api.github.com/repos/${REPO}"
           AUTH="Authorization: Bearer ${GH_TOKEN}"
-          # procurar comentário existente com o mesmo prefixo
-          COMMENT_ID=$(curl -fsSL -H "$AUTH" \
-            "${API}/issues/${PR}/comments?per_page=100" | \
-            python3 -c "
-import json,sys
-cs=json.load(sys.stdin)
-found=[c['id'] for c in cs if c['body'].startswith('**Preview:**')]
-print(found[-1] if found else '')
-          ")
+          COMMENT_ID=$(curl -fsSL -H "$AUTH" "${API}/issues/${PR}/comments?per_page=100" \
+            | python3 -c "import json,sys; cs=json.load(sys.stdin); found=[c['id'] for c in cs if c['body'].startswith('**Preview:**')]; print(found[-1] if found else '')")
           if [ -n "$COMMENT_ID" ]; then
             curl -fsSL -X PATCH -H "$AUTH" -H "Content-Type: application/json" \
-              -d "{\"body\":\"${BODY}\"}" \
-              "${API}/issues/comments/${COMMENT_ID}" > /dev/null
+              -d "{\"body\":\"${BODY}\"}" "${API}/issues/comments/${COMMENT_ID}" > /dev/null
           else
             curl -fsSL -X POST -H "$AUTH" -H "Content-Type: application/json" \
-              -d "{\"body\":\"${BODY}\"}" \
-              "${API}/issues/${PR}/comments" > /dev/null
+              -d "{\"body\":\"${BODY}\"}" "${API}/issues/${PR}/comments" > /dev/null
           fi
