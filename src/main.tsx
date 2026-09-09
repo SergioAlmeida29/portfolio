@@ -4,6 +4,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { LangProvider } from './content'
 import './index.css'
+import './new-version.css'
 import { App } from './router'
 
 createRoot(document.getElementById('root')!).render(
