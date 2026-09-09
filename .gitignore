@@ -18,3 +18,9 @@ coverage/
 infra/cloudflared/*.json
 infra/cloudflared/cert.pem
 infra/**/secrets*
+
+# ficheiros de suporte e documentacao local
+docs/
+CLAUDE.md
+AGENTS.md
+*.handoff.md
