@@ -4,6 +4,7 @@
 #   infra/deploy.sh staging   -> /var/www/staging.sergioalmeida.dev
 #
 # Coloca o build numa pasta releases/<sha> e faz flip do symlink "current".
+# Sincroniza também os configs nginx a partir do repo — sem passos manuais.
 # Se algo falha antes do flip, o site atual fica intacto.
 set -euo pipefail
 
@@ -14,11 +15,54 @@ case "$ENV" in
   *) echo "uso: deploy.sh [prod|staging]" >&2; exit 2 ;;
 esac
 
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/." && pwd)"
+REPO_DIR="$(cd "$REPO_DIR/.." && pwd)"
 SHA="${GITHUB_SHA:-$(git -C "$REPO_DIR" rev-parse HEAD)}"
 KEEP=5
+NGINX_CONF="${ENV}.sergioalmeida.dev.conf"
 
-# origem: dist/ se houver build, senão o index.html do repo (fase pré-scaffold)
+# --- sincronizar configs nginx do repo ---
+sync_nginx() {
+  local changed=0
+
+  # snippet comum a todos os ambientes
+  if ! diff -q "$REPO_DIR/infra/nginx/snippets/sergioalmeida-common.conf" \
+       /etc/nginx/snippets/sergioalmeida-common.conf &>/dev/null; then
+    cp "$REPO_DIR/infra/nginx/snippets/sergioalmeida-common.conf" \
+       /etc/nginx/snippets/sergioalmeida-common.conf
+    changed=1
+  fi
+
+  # snippet de PR previews (apenas staging)
+  if [ "$ENV" = "staging" ]; then
+    if ! diff -q "$REPO_DIR/infra/nginx/snippets/pr-previews.conf" \
+         /etc/nginx/snippets/pr-previews.conf &>/dev/null 2>&1; then
+      cp "$REPO_DIR/infra/nginx/snippets/pr-previews.conf" \
+         /etc/nginx/snippets/pr-previews.conf
+      changed=1
+    fi
+  fi
+
+  # vhost do ambiente
+  if ! diff -q "$REPO_DIR/infra/nginx/$NGINX_CONF" \
+       "/etc/nginx/sites-available/$NGINX_CONF" &>/dev/null; then
+    cp "$REPO_DIR/infra/nginx/$NGINX_CONF" \
+       "/etc/nginx/sites-available/$NGINX_CONF"
+    changed=1
+  fi
+
+  if [ "$changed" = "1" ]; then
+    nginx -t
+    systemctl reload nginx
+    echo "-> nginx recarregado"
+  else
+    echo "-> nginx sem alterações"
+  fi
+}
+
+sync_nginx
+
+# --- deploy do site ---
 if [ -d "$REPO_DIR/dist" ]; then
   SRC="$REPO_DIR/dist"
 else
@@ -29,7 +73,6 @@ fi
 REL="$BASE/releases/$SHA"
 mkdir -p "$REL"
 rsync -rlt --delete "$SRC/" "$REL/"
-# garantir que o nginx (www-data) consegue ler tudo
 chmod -R a=rX,u+w "$REL"
 
 # flip atómico do symlink
