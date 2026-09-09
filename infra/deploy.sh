@@ -28,7 +28,7 @@ sync_nginx() {
   # snippet comum a todos os ambientes
   if ! diff -q "$REPO_DIR/infra/nginx/snippets/sergioalmeida-common.conf" \
        /etc/nginx/snippets/sergioalmeida-common.conf &>/dev/null; then
-    cp "$REPO_DIR/infra/nginx/snippets/sergioalmeida-common.conf" \
+    sudo cp "$REPO_DIR/infra/nginx/snippets/sergioalmeida-common.conf" \
        /etc/nginx/snippets/sergioalmeida-common.conf
     changed=1
   fi
@@ -37,7 +37,7 @@ sync_nginx() {
   if [ "$ENV" = "staging" ]; then
     if ! diff -q "$REPO_DIR/infra/nginx/snippets/pr-previews.conf" \
          /etc/nginx/snippets/pr-previews.conf &>/dev/null 2>&1; then
-      cp "$REPO_DIR/infra/nginx/snippets/pr-previews.conf" \
+      sudo cp "$REPO_DIR/infra/nginx/snippets/pr-previews.conf" \
          /etc/nginx/snippets/pr-previews.conf
       changed=1
     fi
@@ -46,14 +46,14 @@ sync_nginx() {
   # vhost do ambiente
   if ! diff -q "$REPO_DIR/infra/nginx/$NGINX_CONF" \
        "/etc/nginx/sites-available/$NGINX_CONF" &>/dev/null; then
-    cp "$REPO_DIR/infra/nginx/$NGINX_CONF" \
+    sudo cp "$REPO_DIR/infra/nginx/$NGINX_CONF" \
        "/etc/nginx/sites-available/$NGINX_CONF"
     changed=1
   fi
 
   if [ "$changed" = "1" ]; then
-    nginx -t
-    systemctl reload nginx
+    sudo nginx -t
+    sudo systemctl reload nginx
     echo "-> nginx recarregado"
   else
     echo "-> nginx sem alterações"

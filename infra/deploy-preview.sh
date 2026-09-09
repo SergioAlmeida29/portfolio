@@ -25,16 +25,16 @@ VHOST_DST="/etc/nginx/sites-available/staging.sergioalmeida.dev.conf"
 
 nginx_changed=0
 if ! diff -q "$SNIPPET_SRC" "$SNIPPET_DST" &>/dev/null 2>&1; then
-  cp "$SNIPPET_SRC" "$SNIPPET_DST"
+  sudo cp "$SNIPPET_SRC" "$SNIPPET_DST"
   nginx_changed=1
 fi
 if ! diff -q "$VHOST_SRC" "$VHOST_DST" &>/dev/null; then
-  cp "$VHOST_SRC" "$VHOST_DST"
+  sudo cp "$VHOST_SRC" "$VHOST_DST"
   nginx_changed=1
 fi
 if [ "$nginx_changed" = "1" ]; then
-  nginx -t
-  systemctl reload nginx
+  sudo nginx -t
+  sudo systemctl reload nginx
   echo "-> nginx recarregado"
 fi
 
