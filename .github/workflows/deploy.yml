@@ -51,17 +51,21 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           PR="${{ github.event.number }}"
-          echo "=== 1. Testar /pr/${PR}/ ==="
-          curl -s -i "http://127.0.0.1/pr/${PR}/" -H "Host: staging.sergioalmeida.dev" | head -n 30
+          echo "=== 1. Ficheiros em /var/www/staging.sergioalmeida.dev/pr/${PR}/assets/ ==="
+          ls -la "/var/www/staging.sergioalmeida.dev/pr/${PR}/assets/"
           
-          echo "=== 2. Encontrar caminhos de assets no index.html ==="
-          cat "/var/www/staging.sergioalmeida.dev/pr/${PR}/index.html"
+          echo "=== 2. Testar CSS com curl ==="
+          CSS_FILE=$(ls "/var/www/staging.sergioalmeida.dev/pr/${PR}/assets/"*.css | head -1 | xargs -n1 basename)
+          curl -s -i "http://127.0.0.1/pr/${PR}/assets/${CSS_FILE}" -H "Host: staging.sergioalmeida.dev" | head -n 25
           
-          JS_PATH=$(grep -o "/pr/${PR}/assets/[^\"']*\.js" "/var/www/staging.sergioalmeida.dev/pr/${PR}/index.html" | head -1)
-          if [ -n "$JS_PATH" ]; then
-            echo "=== 3. Testar JS ($JS_PATH) ==="
-            curl -s -i "http://127.0.0.1${JS_PATH}" -H "Host: staging.sergioalmeida.dev" | head -n 20
+          echo "=== 3. Testar Motion JS com curl ==="
+          MOTION_FILE=$(ls "/var/www/staging.sergioalmeida.dev/pr/${PR}/assets/"motion-*.js 2>/dev/null | head -1 | xargs -n1 basename || echo "")
+          if [ -n "$MOTION_FILE" ]; then
+            curl -s -i "http://127.0.0.1/pr/${PR}/assets/${MOTION_FILE}" -H "Host: staging.sergioalmeida.dev" | head -n 25
           fi
+          
+          echo "=== 4. Configuração do Nginx ativa para staging ==="
+          sudo nginx -T 2>/dev/null | grep -A 35 "server_name staging.sergioalmeida.dev;"
 
       - name: comentar URL da preview no PR
         if: github.event_name == 'pull_request'
