@@ -7,6 +7,7 @@ import './index.css'
 import './new-version.css'
 import { App } from './router'
 
+// Inicialização da aplicação (Root)
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <LangProvider>
