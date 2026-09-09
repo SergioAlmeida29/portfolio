@@ -26,12 +26,39 @@ jobs:
 
       - name: build
         run: |
-          if [ "$GITHUB_REF" = "refs/heads/dev" ]; then
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            # preview: base path /pr/<N>/ para que os assets e isPreview funcionem
+            node scripts/now.mjs && tsc -b && \
+              npx vite build --mode staging --base "/pr/${{ github.event.number }}/" && \
+              node scripts/robots.mjs
+          elif [ "$GITHUB_REF" = "refs/heads/dev" ]; then
             npm run build:staging
           else
             npm run build
           fi
 
-      - name: deploy
+      - name: deploy (push)
         if: github.event_name == 'push'
         run: bash infra/deploy.sh ${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }}
+
+      - name: deploy preview (pull_request)
+        if: github.event_name == 'pull_request'
+        run: bash infra/deploy-preview.sh ${{ github.event.number }}
+
+      - name: comentar URL da preview no PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.number }}
+        run: |
+          URL="https://staging.sergioalmeida.dev/pr/${PR}/"
+          BODY="**Preview:** [${URL}](${URL})"
+          # atualizar comentário existente ou criar novo
+          COMMENT_ID=$(gh pr view "$PR" --json comments \
+            --jq '[.comments[] | select(.body | startswith("**Preview:**"))] | last | .databaseId // empty')
+          if [ -n "$COMMENT_ID" ]; then
+            gh api "repos/{owner}/{repo}/issues/comments/${COMMENT_ID}" \
+              -X PATCH -f body="$BODY" > /dev/null
+          else
+            gh pr comment "$PR" --body "$BODY"
+          fi
