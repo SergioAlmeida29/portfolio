@@ -24,7 +24,7 @@ try {
     for (const [label, url] of targets) {
       const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'en-US' })
       await page.addInitScript(() => {
-        window.__work = { maps: 0, pngMs: 0, rects: 0, longMs: 0, longCount: 0 }
+        window.__work = { maps: 0, pngMs: 0, imageBytes: 0, rects: 0, longMs: 0, longCount: 0 }
         const toDataURL = HTMLCanvasElement.prototype.toDataURL
         HTMLCanvasElement.prototype.toDataURL = function (...args) {
           const start = performance.now()
@@ -32,6 +32,12 @@ try {
           window.__work.maps++
           window.__work.pngMs += performance.now() - start
           return result
+        }
+        const createImageData = CanvasRenderingContext2D.prototype.createImageData
+        CanvasRenderingContext2D.prototype.createImageData = function (...args) {
+          const image = createImageData.apply(this, args)
+          window.__work.imageBytes += image.data.byteLength
+          return image
         }
         const getRect = Element.prototype.getBoundingClientRect
         Element.prototype.getBoundingClientRect = function (...args) {
@@ -55,7 +61,7 @@ try {
         if (region === 'bottom') await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight - innerHeight - 800, behavior: 'instant' }))
         if (region === 'expand') await page.locator('#work button[aria-expanded]').first().scrollIntoViewIfNeeded()
         await page.waitForTimeout(700)
-        await page.evaluate(() => { window.__work = { maps: 0, pngMs: 0, rects: 0, longMs: 0, longCount: 0 } })
+        await page.evaluate(() => { window.__work = { maps: 0, pngMs: 0, imageBytes: 0, rects: 0, longMs: 0, longCount: 0 } })
         const before = (await client.send('Performance.getMetrics')).metrics
         const recording = page.evaluate(() => new Promise(resolve => {
           const frames = []

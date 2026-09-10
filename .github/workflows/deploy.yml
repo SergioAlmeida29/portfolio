@@ -31,6 +31,43 @@ jobs:
       - name: lint
         run: npm run lint
 
+      - name: instalar browsers de teste
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: build UI na raiz
+        run: npx vite build --mode staging --base / --outDir "$RUNNER_TEMP/portfolio-ui-dist"
+
+      - name: testar UI com preview local
+        timeout-minutes: 10
+        env:
+          BASE_URL: http://127.0.0.1:4173
+          SCREENSHOT_DIR: test-results/screenshots
+        run: |
+          mkdir -p "$SCREENSHOT_DIR"
+          node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 4173 --strictPort --base / --outDir "$RUNNER_TEMP/portfolio-ui-dist" > test-results/preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true; wait "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          READY=false
+          for i in $(seq 1 60); do
+            kill -0 "$PREVIEW_PID" 2>/dev/null || { cat test-results/preview.log; exit 1; }
+            if curl --fail --silent --max-time 2 "$BASE_URL/" > /dev/null; then
+              READY=true
+              break
+            fi
+            sleep 1
+          done
+          [ "$READY" = true ] || { cat test-results/preview.log; exit 1; }
+          npm run test:ui
+
+      - name: guardar resultados UI
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: build
         env:
           GITHUB_TOKEN: ${{ github.token }}

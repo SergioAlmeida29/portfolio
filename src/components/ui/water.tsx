@@ -55,6 +55,7 @@ function compile(gl: WebGLRenderingContext, type: number, src: string) {
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     console.error(gl.getShaderInfoLog(shader))
+    gl.deleteShader(shader)
     return null
   }
 
@@ -79,42 +80,84 @@ export function Water({ className }: { className?: string }) {
     const canvas = el
     const gl = context
 
-    const precision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT)
-    if (!precision || precision.precision === 0) return
-
-    const program = gl.createProgram()
-    const vs = compile(gl, gl.VERTEX_SHADER, VERT)
-    const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG)
-    if (!program || !vs || !fs) return
-
-    gl.attachShader(program, vs)
-    gl.attachShader(program, fs)
-    gl.linkProgram(program)
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return
-    gl.useProgram(program)
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer())
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
-    const attr = gl.getAttribLocation(program, 'a')
-    gl.enableVertexAttribArray(attr)
-    gl.vertexAttribPointer(attr, 2, gl.FLOAT, false, 0, 0)
-
-    gl.enable(gl.BLEND)
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
-
-    const uRes = gl.getUniformLocation(program, 'u_res')
-    const uTime = gl.getUniformLocation(program, 'u_time')
-    const uMouse = gl.getUniformLocation(program, 'u_mouse')
-    const uHover = gl.getUniformLocation(program, 'u_hover')
-
-    document.documentElement.dataset.water = 'gl'
-
     const reduced = matchMedia('(prefers-reduced-motion: reduce)')
+    let program: WebGLProgram | null = null
+    let buffer: WebGLBuffer | null = null
+    let uRes: WebGLUniformLocation | null = null
+    let uTime: WebGLUniformLocation | null = null
+    let uMouse: WebGLUniformLocation | null = null
+    let uHover: WebGLUniformLocation | null = null
+    let ready = false
+    let presented = false
     let mouseX = 0.5
     let mouseY = 0.7
     let hover = 0
     let target = 0
     let frame = 0
+    let time = performance.now()
+
+    function stop() {
+      cancelAnimationFrame(frame)
+      frame = 0
+    }
+
+    function dispose() {
+      stop()
+      ready = false
+      presented = false
+      delete document.documentElement.dataset.water
+      gl.useProgram(null)
+      gl.bindBuffer(gl.ARRAY_BUFFER, null)
+      if (buffer) gl.deleteBuffer(buffer)
+      if (program) gl.deleteProgram(program)
+      buffer = null
+      program = null
+      uRes = uTime = uMouse = uHover = null
+    }
+
+    function initialize() {
+      let vs: WebGLShader | null = null
+      let fs: WebGLShader | null = null
+      try {
+        const precision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT)
+        if (!precision || precision.precision === 0 || gl.isContextLost()) return
+
+        program = gl.createProgram()
+        vs = compile(gl, gl.VERTEX_SHADER, VERT)
+        fs = compile(gl, gl.FRAGMENT_SHADER, FRAG)
+        if (!program || !vs || !fs) return
+
+        gl.attachShader(program, vs)
+        gl.attachShader(program, fs)
+        gl.linkProgram(program)
+        gl.detachShader(program, vs)
+        gl.detachShader(program, fs)
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return
+        gl.useProgram(program)
+
+        buffer = gl.createBuffer()
+        if (!buffer) return
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
+        const attr = gl.getAttribLocation(program, 'a')
+        if (attr < 0) return
+        gl.enableVertexAttribArray(attr)
+        gl.vertexAttribPointer(attr, 2, gl.FLOAT, false, 0, 0)
+
+        gl.enable(gl.BLEND)
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
+
+        uRes = gl.getUniformLocation(program, 'u_res')
+        uTime = gl.getUniformLocation(program, 'u_time')
+        uMouse = gl.getUniformLocation(program, 'u_mouse')
+        uHover = gl.getUniformLocation(program, 'u_hover')
+        ready = uRes !== null && uTime !== null && uMouse !== null && uHover !== null
+      } finally {
+        if (vs) gl.deleteShader(vs)
+        if (fs) gl.deleteShader(fs)
+        if (!ready) dispose()
+      }
+    }
 
     function resize() {
       const dpr = Math.min(devicePixelRatio || 1, 1.25)
@@ -127,17 +170,34 @@ export function Water({ className }: { className?: string }) {
     }
 
     function draw(now: number) {
+      if (!ready || document.hidden) return
+      if (gl.isContextLost()) {
+        dispose()
+        return
+      }
+      if (!reduced.matches) time = now
       hover += (target - hover) * 0.06
-      gl.uniform1f(uTime, now / 1000)
+      gl.uniform1f(uTime, time / 1000)
       gl.uniform2f(uMouse, mouseX, mouseY)
       gl.uniform1f(uHover, hover)
       gl.clear(gl.COLOR_BUFFER_BIT)
       gl.drawArrays(gl.TRIANGLES, 0, 3)
+      if (!presented) {
+        if (gl.isContextLost() || gl.getError() !== gl.NO_ERROR) {
+          dispose()
+          return
+        }
+        presented = true
+        document.documentElement.dataset.water = 'gl'
+      }
     }
 
     function loop(now: number) {
+      frame = 0
       draw(now)
-      frame = requestAnimationFrame(loop)
+      if (ready && !document.hidden && !reduced.matches) {
+        frame = requestAnimationFrame(loop)
+      }
     }
 
     function onPointerMove(event: PointerEvent) {
@@ -150,36 +210,44 @@ export function Water({ className }: { className?: string }) {
       target = 0
     }
 
-    function onResize() {
+    function sync() {
+      stop()
+      if (!ready || document.hidden || gl.isContextLost()) return
       resize()
-      draw(performance.now())
+      if (reduced.matches) draw(performance.now())
+      else frame = requestAnimationFrame(loop)
     }
 
-    function onVisibility() {
-      if (document.hidden) {
-        cancelAnimationFrame(frame)
-        frame = 0
-      } else if (!frame && !reduced.matches) {
-        frame = requestAnimationFrame(loop)
-      }
+    function onContextLost(event: Event) {
+      event.preventDefault()
+      dispose()
+    }
+
+    function onContextRestored() {
+      initialize()
+      sync()
     }
 
     addEventListener('pointermove', onPointerMove, { passive: true })
-    addEventListener('resize', onResize, { passive: true })
+    addEventListener('resize', sync, { passive: true })
     document.addEventListener('pointerleave', onPointerLeave, { passive: true })
-    document.addEventListener('visibilitychange', onVisibility)
+    document.addEventListener('visibilitychange', sync)
+    reduced.addEventListener('change', sync)
+    canvas.addEventListener('webglcontextlost', onContextLost)
+    canvas.addEventListener('webglcontextrestored', onContextRestored)
 
-    resize()
-    if (reduced.matches) draw(performance.now())
-    else frame = requestAnimationFrame(loop)
+    initialize()
+    sync()
 
     return () => {
-      cancelAnimationFrame(frame)
+      dispose()
       removeEventListener('pointermove', onPointerMove)
-      removeEventListener('resize', onResize)
+      removeEventListener('resize', sync)
       document.removeEventListener('pointerleave', onPointerLeave)
-      document.removeEventListener('visibilitychange', onVisibility)
-      delete document.documentElement.dataset.water
+      document.removeEventListener('visibilitychange', sync)
+      reduced.removeEventListener('change', sync)
+      canvas.removeEventListener('webglcontextlost', onContextLost)
+      canvas.removeEventListener('webglcontextrestored', onContextRestored)
     }
   }, [])
 

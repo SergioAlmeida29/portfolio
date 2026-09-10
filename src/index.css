@@ -258,7 +258,6 @@ html::after {
   .glass-soft {
     background: #0a1c2e;
     backdrop-filter: none;
-    -webkit-backdrop-filter: none;
   }
 }
 

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { chromium } from 'playwright'
 
-// Run against npm run dev, or set BASE_URL to a built preview server.
+// Use a root-base built preview for the pre-app-JS fallback checks.
 const base = process.env.BASE_URL ?? 'http://127.0.0.1:5173'
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_PATH || undefined,
@@ -36,6 +36,10 @@ try {
     }))
     assert.equal(isolated.length, 4)
     assert.ok(isolated.every(Boolean), 'empty-backdrop optimization requires an unpainted, filtered parent')
+    if (width === 1280) {
+      const mask = page.locator('#contact [data-empty-backdrop] > [data-lg-layer]').nth(1)
+      assert.equal(await mask.evaluate(el => getComputedStyle(el).maskImage), 'none', 'offscreen contact mask must stay lazy')
+    }
     await save(page, `new-${width}-hero`)
     const cta = await page.locator('.hero-actions a').first().boundingBox()
     if (width >= 1024 && cta.y + cta.height > height) errors.push(`${width}: primary CTA below fold`)
@@ -46,6 +50,20 @@ try {
         window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - offset, behavior: 'instant' })
       }, id)
       await page.waitForTimeout(950)
+      if (id === 'contact') {
+        await page.waitForFunction(() => {
+          const layer = document.querySelector('#contact [data-empty-backdrop] > [data-lg-layer]:nth-child(2)')
+          return layer && getComputedStyle(layer).display !== 'none' && getComputedStyle(layer).maskImage.includes('data:image/png')
+        })
+        assert.ok(await page.locator('#contact [data-empty-backdrop] > [data-lg-layer]').nth(1).evaluate(async el => {
+          const url = getComputedStyle(el).maskImage.match(/^url\(["']?(.*?)["']?\)$/)?.[1]
+          if (!url) return false
+          const image = new Image()
+          image.src = url
+          await image.decode()
+          return image.naturalWidth > 0 && image.naturalHeight > 0
+        }), 'lazy mask must contain a decodable image, not just a mounted layer')
+      }
       const active = await page.locator('.nav-sections [aria-current]').getAttribute('href')
       assert.equal(active, `#${id}`, `${width}: active section ${id}`)
       assert.equal(await page.locator('.nav-active-line').count(), 1)
@@ -162,3 +180,5 @@ try {
   if (errors.length) console.error(JSON.stringify(errors, null, 2))
   await browser.close()
 }
+
+await import('./check-ui-fallbacks.mjs')

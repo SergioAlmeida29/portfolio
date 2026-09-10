@@ -24,7 +24,7 @@ export function EmptyBackdropGlass({
       /\b(?:Chrome|Chromium|Edg)\//.test(ua) && !/\b(?:CriOS|EdgiOS|FxiOS|OPiOS)\b/.test(ua) && !/iPhone|iPad|iPod/.test(ua)
   })
   const [nearViewport, setNearViewport] = useState(!defer)
-  const cache = useRef({ key: '', url: '', canvas: null as HTMLCanvasElement | null })
+  const cache = useRef({ key: '', url: '', canvas: null as HTMLCanvasElement | null, image: null as ImageData | null })
   const o = { ...specularDefaults, ...optics }
   const enabled = nearViewport && supportsRefraction && o.specular > 0 && (o.glow > 0 || o.sheen > 0)
   const brightness = Math.min(1, Math.abs(o.brightness))
@@ -59,7 +59,10 @@ export function EmptyBackdropGlass({
       overlay.style.backgroundColor = `rgb(${rgb.slice(0, 3).map(channel =>
         (1 - brightness) * ((1 - tint) * 255 + tint * channel) + brightness * veil,
       ).join(',')})`
-      if (width <= 0 || height <= 0) return
+      if (width <= 0 || height <= 0) {
+        overlay.style.visibility = 'hidden'
+        return
+      }
       const key = JSON.stringify([
         width, height, radius, o.mapSize, o.clipToShape, o.softEdge, o.depth,
         o.sheenAngle, o.sheen, o.sheenWidth, o.sheenFalloff, o.glow, o.glowSpread, o.glowFalloff,
@@ -71,10 +74,16 @@ export function EmptyBackdropGlass({
           canvas.width = canvas.height = o.mapSize
         }
         const context = canvas.getContext('2d')
-        if (!context) return
-        const image = context.createImageData(o.mapSize, o.mapSize)
+        if (!context) {
+          overlay.style.visibility = 'hidden'
+          return
+        }
+        if (!cached.image || cached.image.width !== o.mapSize) {
+          cached.image = context.createImageData(o.mapSize, o.mapSize)
+          cached.image.data.fill(255)
+        }
+        const image = cached.image
         const alpha = createSpecularAlphaMap(width, height, radius, optics)
-        image.data.fill(255)
         for (let i = 0; i < alpha.length; i++) image.data[i * 4 + 3] = alpha[i]
         context.putImageData(image, 0, 0)
         cached.url = canvas.toDataURL('image/png')
@@ -83,14 +92,13 @@ export function EmptyBackdropGlass({
       const image = `url("${cached.url}")`
       overlay.style.maskImage = image
       overlay.style.webkitMaskImage = image
+      overlay.style.visibility = 'visible'
     }
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(el)
-    window.addEventListener('resize', measure)
     return () => {
       observer.disconnect()
-      window.removeEventListener('resize', measure)
     }
   }, [optics, className, style, enabled, brightness, o.brightness, o.mapSize,
     o.clipToShape, o.softEdge, o.depth, o.sheenAngle, o.sheen, o.sheenWidth,
@@ -103,7 +111,7 @@ export function EmptyBackdropGlass({
       <div aria-hidden data-lg-layer="" style={{ ...layer,
         background: o.brightness > 0 ? '#fff' : '#000', opacity: brightness }} />
       <div ref={mask} aria-hidden data-lg-layer="" style={{ ...layer,
-        display: enabled ? undefined : 'none', opacity: o.specular,
+        display: enabled ? undefined : 'none', visibility: 'hidden', opacity: o.specular,
         maskSize: '100% 100%', WebkitMaskSize: '100% 100%',
         maskRepeat: 'no-repeat', WebkitMaskRepeat: 'no-repeat' }} />
       {children}
