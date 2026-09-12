@@ -32,6 +32,18 @@ export function RootLayout({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  useEffect(() => {
+    if (!isLiquidGlass) return
+    const preference = matchMedia('(prefers-reduced-transparency: reduce)')
+    const sync = () => {
+      if (preference.matches) document.documentElement.dataset.transparency = 'reduced'
+      else delete document.documentElement.dataset.transparency
+    }
+    sync()
+    preference.addEventListener('change', sync)
+    return () => preference.removeEventListener('change', sync)
+  }, [])
+
   return (
     <div className="min-h-[100dvh]">
       <a
