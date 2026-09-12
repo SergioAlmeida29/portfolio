@@ -2,7 +2,6 @@ import { Glass, type GlassOptics } from '@samasante/liquid-glass'
 import { animate, motion, useMotionValue, useReducedMotion, useSpring } from 'motion/react'
 import { useEffect, useState, type PointerEvent, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
-import { isPreview } from '../../lib/preview'
 import { EmptyBackdropGlass } from './empty-backdrop-glass'
 
 const optics: Partial<GlassOptics> = {
@@ -59,14 +58,24 @@ export function GlassPanel({
 
   useEffect(() => {
     if (surface !== 'navigation' || navigationReady) return
-    const reveal = () => setNavigationReady(true)
+    let disposed = false
+    const reveal = () => {
+      if (!disposed) setNavigationReady(true)
+    }
     const requestIdle = (window as Window & { requestIdleCallback?: typeof window.requestIdleCallback }).requestIdleCallback
     if (requestIdle) {
       const id = requestIdle.call(window, reveal, { timeout: 500 })
-      return () => window.cancelIdleCallback(id)
+      const cancelIdle = (window as Window & { cancelIdleCallback?: (handle: number) => void }).cancelIdleCallback
+      return () => {
+        disposed = true
+        cancelIdle?.call(window, id)
+      }
     }
     const id = globalThis.setTimeout(reveal, 0)
-    return () => globalThis.clearTimeout(id)
+    return () => {
+      disposed = true
+      globalThis.clearTimeout(id)
+    }
   }, [navigationReady, surface])
 
   useEffect(() => {
@@ -88,7 +97,6 @@ export function GlassPanel({
     }
   }
 
-  if (!isPreview) return <div className={className}>{children}</div>
   if (surface === 'navigation' && !navigationReady) {
     return <div className={cn('liquid-panel', className)} data-surface={surface} data-opaque={opaque || undefined} style={panelStyle}>{children}</div>
   }

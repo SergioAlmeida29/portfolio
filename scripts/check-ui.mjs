@@ -28,7 +28,6 @@ try {
     assert.deepEqual(await page.locator('.nav-sections a').evaluateAll(links => links.map(link => link.hash)), sectionIds.map(id => `#${id}`))
     assert.equal(await page.locator('.nav-cv').getAttribute('href'), new URL(`${base}/Sergio-Almeida-CV.pdf`).pathname)
     assert.equal(await page.locator('.nav-sections [aria-current]').count(), 0)
-    assert.ok(await page.locator('html').evaluate(el => el.classList.contains('lenis')))
     assert.equal(await page.locator('.nav-shell feDisplacementMap').count(), 3, 'navigation retains full RGB refraction')
     const isolated = await page.locator('[data-empty-backdrop]').evaluateAll(panels => panels.map(panel => {
       const root = panel.parentElement
@@ -158,7 +157,6 @@ try {
   ] })
   assert.equal((await page.goto(`${base}/`))?.status(), 200, 'reduced transparency response')
   await page.locator('.now-card[data-opaque]').waitFor()
-  assert.equal(await page.locator('html').evaluate(el => el.classList.contains('lenis')), false)
   assert.equal(await page.locator('.now-card').evaluate(el => getComputedStyle(el).backdropFilter), 'none')
   assert.ok(await page.locator('[data-empty-backdrop]').evaluateAll(panels =>
     panels.every(panel => getComputedStyle(panel).backdropFilter === 'none'),
@@ -168,7 +166,6 @@ try {
   await client.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }, { name: 'prefers-reduced-transparency', value: 'no-preference' }] })
   await page.waitForTimeout(500)
   assert.equal(await button.getAttribute('aria-expanded'), 'true', 'preference change must not remount content')
-  assert.ok(await page.locator('html').evaluate(el => el.classList.contains('lenis')))
   if (!prBase) {
     for (const route of ['/v1', '/v2', '/v3']) {
       assert.equal((await page.goto(`${base}${route}`))?.status(), 200, `${route} response`)

@@ -1,6 +1,5 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '../../lib/cn'
-import { isPreview } from '../../lib/preview'
 
 export function WordReveal({
   text,
@@ -20,19 +19,15 @@ export function WordReveal({
 
   if (reduce) return <span className={className}>{text}</span>
 
-  const animation = isPreview
-    ? { variants: { hidden: { y: '115%' }, visible: { y: '0%' } } }
-    : inView
-    ? { whileInView: { y: '0%' }, viewport: { once: true, amount: 0.6 } }
-    : { animate: { y: '0%' } }
+  const animation = { variants: { hidden: { y: '115%' }, visible: { y: '0%' } } }
 
   return (
     <motion.span
       className={cn('inline-flex flex-wrap', className)}
       // Observe the visible wrapper, not a translated child clipped by overflow.
-      initial={isPreview ? 'hidden' : undefined}
-      animate={isPreview && !inView ? 'visible' : undefined}
-      whileInView={isPreview && inView ? 'visible' : undefined}
+      initial="hidden"
+      animate={!inView ? 'visible' : undefined}
+      whileInView={inView ? 'visible' : undefined}
       viewport={{ once: true, amount: 0.2 }}
     >
       {words.map((word, i) => (
@@ -42,7 +37,6 @@ export function WordReveal({
         >
           <motion.span
             className="inline-block will-change-transform"
-            initial={isPreview ? undefined : { y: '115%' }}
             {...animation}
             transition={{
               duration: 0.75,

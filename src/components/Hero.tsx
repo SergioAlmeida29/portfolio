@@ -3,7 +3,6 @@ import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { useRef } from 'react'
 import { useContent } from '../content'
 import { cvUrl } from '../lib/base'
-import { isPreview } from '../lib/preview'
 import { NowPanel } from './NowPanel'
 import { WordReveal } from './ui/word-reveal'
 
@@ -24,7 +23,7 @@ export function Hero() {
   })
 
   return (
-    <section ref={ref} data-native-scroll={isPreview && nativeParallax || undefined} className="hero mx-auto grid min-h-[100dvh] max-w-6xl content-center gap-14 px-6 pt-28 pb-20 md:px-10 lg:grid-cols-12 lg:gap-10 xl:max-w-7xl">
+    <section ref={ref} data-native-scroll={nativeParallax || undefined} className="hero mx-auto grid min-h-[100dvh] max-w-6xl content-center gap-14 px-6 pt-28 pb-20 md:px-10 lg:grid-cols-12 lg:gap-10 xl:max-w-7xl">
       <div className="hero-copy lg:col-span-7 xl:col-span-7">
         <motion.div
           {...rise(0.02)}
@@ -34,10 +33,10 @@ export function Hero() {
         </motion.div>
 
         <h1 className="mt-7 text-[clamp(4rem,10.5vw,8.5rem)] font-medium leading-[0.92] tracking-[-0.035em]">
-          <motion.span className="hero-first block" style={isPreview && !reduce && !nativeParallax ? { x: drift } : undefined}>
+          <motion.span className="hero-first block" style={!reduce && !nativeParallax ? { x: drift } : undefined}>
             <WordReveal text="Sérgio" delay={0.06} />
           </motion.span>
-          <motion.span className="hero-last block" style={isPreview && !reduce && !nativeParallax ? { x: nameDrift } : undefined}>
+          <motion.span className="hero-last block" style={!reduce && !nativeParallax ? { x: nameDrift } : undefined}>
             <WordReveal text="Almeida" delay={0.14} />
           </motion.span>
         </h1>

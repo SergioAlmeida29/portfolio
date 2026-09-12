@@ -4,7 +4,6 @@ import type { ReactNode } from 'react'
 import { useId, useState } from 'react'
 import { useContent } from '../../content'
 import { cn } from '../../lib/cn'
-import { isPreview } from '../../lib/preview'
 
 export function Expandable({
   head,
@@ -23,41 +22,6 @@ export function Expandable({
   const [open, setOpen] = useState(false)
   const reduce = useReducedMotion()
   const panelId = useId()
-
-  if (!isPreview) {
-    return (
-      <div className={className}>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          aria-controls={panelId}
-          className="group/exp flex w-full items-start gap-6 text-left"
-        >
-          <span className="min-w-0 flex-1">{head}</span>
-          <span
-            aria-hidden
-            className="glass-soft mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted transition-colors duration-300 group-hover/exp:border-white/25 group-hover/exp:text-fg"
-          >
-            <motion.span
-              className="grid place-items-center"
-              animate={{ rotate: open ? 45 : 0 }}
-              transition={{ duration: reduce ? 0 : 0.35, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <IconPlus size={15} stroke={2} />
-            </motion.span>
-          </span>
-          <span className="sr-only">
-            {open ? `${ui.close} ${label}` : `${ui.open} ${label}`}
-          </span>
-        </button>
-
-        <ExpandableContent open={open} panelId={panelId} reduce={reduce} contentClassName={contentClassName}>
-          {children}
-        </ExpandableContent>
-      </div>
-    )
-  }
 
   return (
     <div className={cn('disclosure', className)}>

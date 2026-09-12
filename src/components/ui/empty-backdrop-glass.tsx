@@ -29,6 +29,10 @@ export function EmptyBackdropGlass({
   const enabled = nearViewport && supportsRefraction && o.specular > 0 && (o.glow > 0 || o.sheen > 0)
   const brightness = Math.min(1, Math.abs(o.brightness))
   const gain = Math.max(0, Math.min(1.5, o.specular))
+  const mapKey = [
+    o.mapSize, o.clipToShape, o.softEdge, o.depth, o.sheenAngle, o.sheen,
+    o.sheenWidth, o.sheenFalloff, o.glow, o.glowSpread, o.glowFalloff,
+  ].join('|')
   const backdrop = [
     o.frost > 0 ? `blur(${o.frost}px)` : '',
     o.saturate !== 1 ? `saturate(${o.saturate})` : '',
@@ -81,9 +85,7 @@ export function EmptyBackdropGlass({
     return () => {
       observer.disconnect()
     }
-  }, [optics, className, style, enabled, brightness, o.brightness,
-    o.clipToShape, o.softEdge, o.depth, o.sheenAngle, o.sheen, o.sheenWidth,
-    o.sheenFalloff, o.glow, o.glowSpread, o.glowFalloff])
+  }, [optics, className, style, enabled, brightness, o.brightness, mapKey])
 
   return (
     <div {...rest} ref={root} data-liquid-glass="empty-backdrop" className={className}

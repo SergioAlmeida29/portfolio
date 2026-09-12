@@ -2,12 +2,12 @@ import { motion, useReducedMotion, useScroll } from 'motion/react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useContent } from '../content'
 import { cvUrl } from '../lib/base'
-import { isPreview } from '../lib/preview'
+import { isLiquidGlass } from '../lib/preview'
 import { LangToggle } from './LangToggle'
 import { GlassPanel } from './ui/glass-panel'
 
 export function Nav() {
-  return isPreview ? <PreviewNav /> : <DefaultNav />
+  return isLiquidGlass ? <PreviewNav /> : <DefaultNav />
 }
 
 function DefaultNav() {
@@ -147,7 +147,7 @@ function PreviewNav() {
           <a href="#top" className="nav-brand">
             Sérgio Almeida
           </a>
-          <motion.nav ref={strip} className="nav-sections" aria-label={ui.menu} layoutScroll data-lenis-prevent>
+          <motion.nav ref={strip} className="nav-sections" aria-label={ui.menu} layoutScroll>
             {nav.links.map((link) => (
               <a
                 key={link.href}
