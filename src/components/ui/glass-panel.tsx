@@ -26,6 +26,7 @@ const navigationOptics = { ...optics, frost: 7 }
 const emptyBackdropOptics = { ...optics, strength: 0, dispersion: 0 }
 const opaqueOptics = { ...optics, strength: 0, dispersion: 0, frost: 0, saturate: 1, brightness: 0, specular: 0, sheen: 0, glow: 0 }
 const panelStyle = { display: 'block', position: 'relative', width: '100%' } as const
+const opaqueStyle = { ...panelStyle, background: '#0a1c2e', backdropFilter: 'none', WebkitBackdropFilter: 'none' } as const
 
 export function GlassPanel({
   children,
@@ -98,7 +99,10 @@ export function GlassPanel({
   }
 
   if (surface === 'navigation' && !navigationReady) {
-    return <div className={cn('liquid-panel', className)} data-surface={surface} data-opaque={opaque || undefined} style={panelStyle}>{children}</div>
+    return <div className={cn('liquid-panel', className)} data-surface={surface} data-opaque={opaque || undefined} style={opaque ? opaqueStyle : panelStyle}>{children}</div>
+  }
+  if (opaque && !emptyBackdrop) {
+    return <div className={cn('liquid-panel', className)} data-surface={surface} data-opaque style={opaqueStyle}><div className="glass-content">{children}</div></div>
   }
   const Material = emptyBackdrop && surface === 'panel' ? EmptyBackdropGlass : Glass
 
