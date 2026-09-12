@@ -32,6 +32,130 @@ export const specularDefaults = {
   specular: 1, frost: 6, saturate: 1.15, brightness: 0,
 } satisfies Partial<GlassOptics>
 
+const specularMapCache = new Map<string, string>()
+const specularMapPending = new Map<string, Promise<string>>()
+const maxCachedSpecularMaps = 16
+const workerRequests = new Map<number, { resolve: (alpha: Uint8ClampedArray) => void; reject: (error: Error) => void }>()
+let specularWorker: Worker | null = null
+let workerRequestId = 0
+let workerUnavailable = false
+
+function specularMapKey(width: number, height: number, borderRadius: number, optics: Partial<GlassOptics>) {
+  const o = { ...specularDefaults, ...optics }
+  return [
+    Math.max(1, Math.round(width)), Math.max(1, Math.round(height)), Math.max(0, Math.round(borderRadius)),
+    o.mapSize, o.clipToShape, o.softEdge, o.depth, o.sheenAngle, o.sheen, o.sheenWidth,
+    o.sheenFalloff, o.glow, o.glowSpread, o.glowFalloff,
+  ].join('|')
+}
+
+function encode(canvas: HTMLCanvasElement) {
+  if (typeof canvas.toBlob !== 'function') return Promise.resolve(canvas.toDataURL('image/png'))
+  return new Promise<string>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error('Não foi possível codificar a máscara especular'))
+        return
+      }
+      const reader = new FileReader()
+      reader.onload = () => resolve(String(reader.result))
+      reader.onerror = () => reject(reader.error ?? new Error('Não foi possível ler a máscara especular'))
+      reader.readAsDataURL(blob)
+    }, 'image/png')
+  })
+}
+
+function getSpecularWorker() {
+  if (workerUnavailable || typeof Worker === 'undefined') return null
+  if (specularWorker) return specularWorker
+  try {
+    specularWorker = new Worker(new URL('./specular-map.worker.ts', import.meta.url), { type: 'module' })
+    specularWorker.onmessage = (event: MessageEvent<{ id: number; alpha: ArrayBuffer }>) => {
+      const request = workerRequests.get(event.data.id)
+      if (!request) return
+      workerRequests.delete(event.data.id)
+      request.resolve(new Uint8ClampedArray(event.data.alpha))
+    }
+    specularWorker.onerror = () => {
+      workerUnavailable = true
+      specularWorker?.terminate()
+      specularWorker = null
+      const error = new Error('Worker da máscara especular indisponível')
+      for (const request of workerRequests.values()) request.reject(error)
+      workerRequests.clear()
+    }
+    return specularWorker
+  } catch {
+    workerUnavailable = true
+    return null
+  }
+}
+
+function renderAlpha(width: number, height: number, borderRadius: number, optics: Partial<GlassOptics>) {
+  const worker = getSpecularWorker()
+  if (!worker) return Promise.resolve(createSpecularAlphaMap(width, height, borderRadius, optics))
+  const id = ++workerRequestId
+  return new Promise<Uint8ClampedArray>((resolve, reject) => {
+    workerRequests.set(id, { resolve, reject })
+    worker.postMessage({ id, width, height, borderRadius, optics })
+  }).catch(() => createSpecularAlphaMap(width, height, borderRadius, optics))
+}
+
+function renderSpecularMap(width: number, height: number, borderRadius: number, optics: Partial<GlassOptics>) {
+  return new Promise<string>((resolve, reject) => {
+    requestAnimationFrame(() => {
+      try {
+        const o = { ...specularDefaults, ...optics }
+        const size = o.mapSize
+        const canvas = document.createElement('canvas')
+        canvas.width = canvas.height = size
+        const context = canvas.getContext('2d')
+        if (!context) {
+          reject(new Error('Canvas 2D indisponível para a máscara especular'))
+          return
+        }
+        void renderAlpha(width, height, borderRadius, o).then((alpha) => {
+          const image = context.createImageData(size, size)
+          image.data.fill(255)
+          for (let i = 0; i < alpha.length; i++) image.data[i * 4 + 3] = alpha[i]
+          context.putImageData(image, 0, 0)
+          return encode(canvas)
+        }).then(resolve, reject)
+      } catch (error) {
+        reject(error)
+      }
+    })
+  })
+}
+
+export function getSpecularMap(
+  width: number, height: number, borderRadius: number, optics: Partial<GlassOptics> = {},
+) {
+  const key = specularMapKey(width, height, borderRadius, optics)
+  const cached = specularMapCache.get(key)
+  if (cached) {
+    specularMapCache.delete(key)
+    specularMapCache.set(key, cached)
+    return Promise.resolve(cached)
+  }
+  const pending = specularMapPending.get(key)
+  if (pending) return pending
+
+  const o = { ...specularDefaults, ...optics }
+  const request = renderSpecularMap(
+    Math.max(1, Math.round(width)), Math.max(1, Math.round(height)), Math.max(0, Math.round(borderRadius)), o,
+  )
+  specularMapPending.set(key, request)
+  void request.then((url) => {
+    specularMapPending.delete(key)
+    specularMapCache.set(key, url)
+    while (specularMapCache.size > maxCachedSpecularMaps) specularMapCache.delete(specularMapCache.keys().next().value!)
+  }, () => {
+    specularMapPending.delete(key)
+  })
+  return request
+}
+
 const sdf = (x: number, y: number, radius: number) => {
   const ox = Math.max(x, 0), oy = Math.max(y, 0)
   return (ox > 0 || oy > 0 ? Math.sqrt(ox * ox + oy * oy) : 0)

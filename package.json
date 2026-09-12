@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "lint": "oxlint",
-    "test:ui": "node scripts/check-new-version.mjs"
+    "test:ui": "node scripts/check-ui.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.5",

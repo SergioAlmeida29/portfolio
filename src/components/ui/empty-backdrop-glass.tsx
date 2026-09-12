@@ -1,6 +1,6 @@
 import type { GlassOptics } from '@samasante/liquid-glass'
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type HTMLAttributes } from 'react'
-import { createSpecularAlphaMap, specularDefaults } from '../../lib/specular-map'
+import { getSpecularMap, specularDefaults } from '../../lib/specular-map'
 
 export interface EmptyBackdropGlassProps extends HTMLAttributes<HTMLDivElement> {
   optics?: Partial<GlassOptics>
@@ -24,7 +24,7 @@ export function EmptyBackdropGlass({
       /\b(?:Chrome|Chromium|Edg)\//.test(ua) && !/\b(?:CriOS|EdgiOS|FxiOS|OPiOS)\b/.test(ua) && !/iPhone|iPad|iPod/.test(ua)
   })
   const [nearViewport, setNearViewport] = useState(!defer)
-  const cache = useRef({ key: '', url: '', canvas: null as HTMLCanvasElement | null, image: null as ImageData | null })
+  const mapRequest = useRef(0)
   const o = { ...specularDefaults, ...optics }
   const enabled = nearViewport && supportsRefraction && o.specular > 0 && (o.glow > 0 || o.sheen > 0)
   const brightness = Math.min(1, Math.abs(o.brightness))
@@ -63,36 +63,17 @@ export function EmptyBackdropGlass({
         overlay.style.visibility = 'hidden'
         return
       }
-      const key = JSON.stringify([
-        width, height, radius, o.mapSize, o.clipToShape, o.softEdge, o.depth,
-        o.sheenAngle, o.sheen, o.sheenWidth, o.sheenFalloff, o.glow, o.glowSpread, o.glowFalloff,
-      ])
-      const cached = cache.current
-      if (key !== cached.key) {
-        const canvas = cached.canvas ?? (cached.canvas = document.createElement('canvas'))
-        if (canvas.width !== o.mapSize || canvas.height !== o.mapSize) {
-          canvas.width = canvas.height = o.mapSize
-        }
-        const context = canvas.getContext('2d')
-        if (!context) {
-          overlay.style.visibility = 'hidden'
-          return
-        }
-        if (!cached.image || cached.image.width !== o.mapSize) {
-          cached.image = context.createImageData(o.mapSize, o.mapSize)
-          cached.image.data.fill(255)
-        }
-        const image = cached.image
-        const alpha = createSpecularAlphaMap(width, height, radius, optics)
-        for (let i = 0; i < alpha.length; i++) image.data[i * 4 + 3] = alpha[i]
-        context.putImageData(image, 0, 0)
-        cached.url = canvas.toDataURL('image/png')
-        cached.key = key
-      }
-      const image = `url("${cached.url}")`
-      overlay.style.maskImage = image
-      overlay.style.webkitMaskImage = image
-      overlay.style.visibility = 'visible'
+      const request = ++mapRequest.current
+      overlay.style.visibility = 'hidden'
+      void getSpecularMap(width, height, radius, optics).then((url) => {
+        if (request !== mapRequest.current || !overlay.isConnected) return
+        const image = `url("${url}")`
+        overlay.style.maskImage = image
+        overlay.style.webkitMaskImage = image
+        overlay.style.visibility = 'visible'
+      }, () => {
+        if (request === mapRequest.current) overlay.style.visibility = 'hidden'
+      })
     }
     measure()
     const observer = new ResizeObserver(measure)
@@ -100,7 +81,7 @@ export function EmptyBackdropGlass({
     return () => {
       observer.disconnect()
     }
-  }, [optics, className, style, enabled, brightness, o.brightness, o.mapSize,
+  }, [optics, className, style, enabled, brightness, o.brightness,
     o.clipToShape, o.softEdge, o.depth, o.sheenAngle, o.sheen, o.sheenWidth,
     o.sheenFalloff, o.glow, o.glowSpread, o.glowFalloff])
 

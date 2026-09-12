@@ -19,6 +19,7 @@ export function Reveal({
       className={className}
       // Keep the empty backdrop boundary even before reduced-motion reveals enter.
       style={isPreview && reduce ? { filter: 'blur(0px)' } : undefined}
+      animate={isPreview && reduce ? { opacity: 1, y: 0, filter: 'blur(0px)' } : undefined}
       initial={
         reduce
           ? false

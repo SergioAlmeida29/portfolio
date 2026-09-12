@@ -45,6 +45,7 @@ export function GlassPanel({
 }) {
   const reducedMotion = useReducedMotion()
   const [opaque, setOpaque] = useState(() => matchMedia('(prefers-reduced-transparency: reduce)').matches)
+  const [navigationReady, setNavigationReady] = useState(surface !== 'navigation')
   const x = useSpring(0, { stiffness: 450, damping: 40 })
   const y = useSpring(0, { stiffness: 450, damping: 40 })
   const opacity = useMotionValue(0)
@@ -55,6 +56,18 @@ export function GlassPanel({
     preference.addEventListener('change', sync)
     return () => preference.removeEventListener('change', sync)
   }, [])
+
+  useEffect(() => {
+    if (surface !== 'navigation' || navigationReady) return
+    const reveal = () => setNavigationReady(true)
+    const requestIdle = (window as Window & { requestIdleCallback?: typeof window.requestIdleCallback }).requestIdleCallback
+    if (requestIdle) {
+      const id = requestIdle.call(window, reveal, { timeout: 500 })
+      return () => window.cancelIdleCallback(id)
+    }
+    const id = globalThis.setTimeout(reveal, 0)
+    return () => globalThis.clearTimeout(id)
+  }, [navigationReady, surface])
 
   useEffect(() => {
     if (opaque || reducedMotion) opacity.set(0)
@@ -76,6 +89,9 @@ export function GlassPanel({
   }
 
   if (!isPreview) return <div className={className}>{children}</div>
+  if (surface === 'navigation' && !navigationReady) {
+    return <div className={cn('liquid-panel', className)} data-surface={surface} data-opaque={opaque || undefined} style={panelStyle}>{children}</div>
+  }
   const Material = emptyBackdrop && surface === 'panel' ? EmptyBackdropGlass : Glass
 
   return (

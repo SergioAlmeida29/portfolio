@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import { chromium, firefox, webkit } from 'playwright'
 
-const base = (process.env.BASE_URL ?? 'http://127.0.0.1:5173').replace(/\/$/, '')
-const routes = ['/', '/new', '/new/']
+const base = (process.env.BASE_URL ?? 'http://127.0.0.1:5173').replace(/\/+$/, '')
+const routes = ['/']
 
 for (const [name, engine, options] of [
   ['chromium-no-webgl', chromium, { executablePath: process.env.CHROME_PATH || undefined, args: ['--disable-webgl'] }],
@@ -21,25 +21,24 @@ for (const [name, engine, options] of [
           if (message.type() === 'error') errors.push(message.text())
         })
         try {
-          await page.goto(`${base}${route}`)
+          assert.equal((await page.goto(`${base}${route}`))?.status(), 200, `${label}: response`)
           await page.locator('.hero h1').waitFor()
           await page.evaluate(() => document.fonts.ready)
-          assert.equal(await page.locator('html').getAttribute('data-preview'), route === '/' ? null : 'new', label)
+          assert.equal(await page.locator('html').getAttribute('data-preview'), 'liquid-glass', label)
           if (name === 'chromium-no-webgl') {
             assert.equal(await page.evaluate(() => document.createElement('canvas').getContext('webgl')), null, label)
-            assert.notEqual(await page.locator('html').getAttribute('data-water'), 'gl', label)
+            assert.equal(await page.locator('html').getAttribute('data-water'), 'fallback', label)
+            assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el, '::before').display), 'block', `${label}: static background fallback`)
           }
-          if (route !== '/') {
-            assert.equal(await page.locator('[data-empty-backdrop]').count(), 4, `${label}: fallback cards`)
-            assert.ok(await page.locator('[data-empty-backdrop]').evaluateAll(panels => panels.every(panel => {
-              const style = getComputedStyle(panel)
-              return (style.backdropFilter || style.webkitBackdropFilter || 'none') !== 'none'
-            })), `${label}: native frost remains available`)
-            if (name !== 'chromium-no-webgl') {
-              assert.ok(await page.locator('[data-empty-backdrop] > [data-lg-layer]:nth-child(2)').evaluateAll(layers =>
-                layers.length === 4 && layers.every(layer => getComputedStyle(layer).display === 'none'),
-              ), `${label}: unsupported refraction uses native fallback`)
-            }
+          assert.equal(await page.locator('[data-empty-backdrop]').count(), 4, `${label}: fallback cards`)
+          assert.ok(await page.locator('[data-empty-backdrop]').evaluateAll(panels => panels.every(panel => {
+            const style = getComputedStyle(panel)
+            return (style.backdropFilter || style.webkitBackdropFilter || 'none') !== 'none'
+          })), `${label}: native frost remains available`)
+          if (name !== 'chromium-no-webgl') {
+            assert.ok(await page.locator('[data-empty-backdrop] > [data-lg-layer]:nth-child(2)').evaluateAll(layers =>
+              layers.length === 4 && layers.every(layer => getComputedStyle(layer).display === 'none'),
+            ), `${label}: unsupported refraction uses native fallback`)
           }
           if (reducedMotion === 'reduce') {
             assert.equal(await page.locator('html').evaluate(el => el.classList.contains('lenis')), false, label)
@@ -82,20 +81,20 @@ const browser = await chromium.launch({
   args: ['--enable-unsafe-swiftshader'],
 })
 try {
-  for (const route of [...routes, '/pr/36/', '/pr/36/new']) {
+  for (const route of routes) {
     const page = await browser.newPage()
     try {
       // Keep inline bootstrap and built CSS, but never execute application modules.
       await page.route('**/*', request => request.request().resourceType() === 'script'
         ? request.fulfill({ contentType: 'application/javascript', body: '' })
         : request.continue())
-      await page.goto(`${base}${route}`)
+      assert.equal((await page.goto(`${base}${route}`))?.status(), 200, `${route}: early response`)
       assert.equal(await page.locator('#root').evaluate(el => el.childElementCount), 0, 'app JS must not execute')
-      assert.equal(await page.locator('html').getAttribute('data-preview'), route === '/' ? null : 'new', `${route}: early route marker`)
+      assert.equal(await page.locator('html').getAttribute('data-preview'), 'liquid-glass', `${route}: early route marker`)
       const displays = await page.evaluate(() => [document.documentElement, document.body].flatMap(el =>
         ['::before', '::after'].map(pseudo => getComputedStyle(el, pseudo).display),
       ))
-      assert.ok(displays.every(display => route === '/' ? display !== 'none' : display === 'none'), `${route}: legacy background before app JS: ${displays}`)
+      assert.deepEqual(displays, ['none', 'none', 'none', 'none'], `${route}: early background: ${displays}`)
     } finally {
       await page.close()
     }
@@ -122,9 +121,10 @@ try {
           return result
         }
       })
-      await page.goto(`${base}${route}`)
+      assert.equal((await page.goto(`${base}${route}`))?.status(), 200, `${route}: lifecycle response`)
       await page.locator('.hero h1').waitFor()
       await page.waitForFunction(() => document.documentElement.dataset.water === 'gl' && window.waterProbe.draws > 1)
+      assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el, '::before').display), 'none', `${route}: WebGL replaces static background`)
       const button = page.locator('#work button[aria-expanded]').first()
       await button.scrollIntoViewIfNeeded()
       await button.click()
@@ -165,7 +165,7 @@ try {
         { name: 'prefers-reduced-transparency', value: 'reduce' },
       ] })
       await page.waitForFunction(() => !document.documentElement.classList.contains('lenis'))
-      if (route !== '/') await page.locator('.now-card[data-opaque]').waitFor()
+      await page.locator('.now-card[data-opaque]').waitFor()
       const panels = page.locator('.liquid-panel, .glass, .glass-panel, .glass-nav, .glass-soft')
       assert.ok(await panels.count() > 0, `${route}: transparency check must cover panels`)
       assert.ok(await panels.evaluateAll(elements => elements.every(el => getComputedStyle(el).backdropFilter === 'none')),

@@ -1,8 +1,9 @@
 import { chromium } from 'playwright'
 
 // Local laboratory samples, not field Core Web Vitals. Run without other browser tests.
-const targets = [['before', process.env.BASE_URL ?? 'http://127.0.0.1:4173']]
-if (process.env.COMPARE_URL) targets.push(['after', process.env.COMPARE_URL])
+const normalize = url => url.replace(/\/+$/, '')
+const targets = [['before', normalize(process.env.BASE_URL ?? 'http://127.0.0.1:4173')]]
+if (process.env.COMPARE_URL) targets.push(['after', normalize(process.env.COMPARE_URL)])
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_PATH || undefined,
   args: process.env.HARDWARE ? ['--enable-gpu', '--use-angle=gl'] : ['--enable-unsafe-swiftshader'],
@@ -29,6 +30,15 @@ try {
               window.loadProbe.pngMs += performance.now() - start
               return value
             }
+            const toBlob = HTMLCanvasElement.prototype.toBlob
+            HTMLCanvasElement.prototype.toBlob = function (callback, ...args) {
+              const start = performance.now()
+              return toBlob.call(this, blob => {
+                window.loadProbe.maps++
+                window.loadProbe.pngMs += performance.now() - start
+                callback(blob)
+              }, ...args)
+            }
             const create = CanvasRenderingContext2D.prototype.createImageData
             CanvasRenderingContext2D.prototype.createImageData = function (...args) {
               const image = create.apply(this, args)
@@ -46,7 +56,7 @@ try {
             }
           })
           for (const cache of ['cold', 'warm']) {
-            if (cache === 'cold') await page.goto(`${url}/new`)
+            if (cache === 'cold') await page.goto(`${url}/`)
             else await page.reload()
             await page.locator('.hero h1').waitFor()
             await page.evaluate(() => document.fonts.ready)

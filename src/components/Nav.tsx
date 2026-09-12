@@ -169,7 +169,7 @@ function PreviewNav() {
           </motion.nav>
           <div className="nav-tools">
             <a
-              href="/Sergio-Almeida-CV.pdf"
+              href={cvUrl}
               target="_blank"
               rel="noreferrer"
               className="nav-cv"

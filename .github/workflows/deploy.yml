@@ -84,6 +84,40 @@ jobs:
             npm run build
           fi
 
+      - name: testar artifact final do PR
+        if: github.event_name == 'pull_request'
+        timeout-minutes: 10
+        env:
+          BASE_URL: http://127.0.0.1:4174/pr/${{ github.event.number }}
+          SCREENSHOT_DIR: test-results/pr-screenshots
+        run: |
+          PR="${{ github.event.number }}"
+          [[ "$PR" =~ ^[0-9]+$ ]] || { echo "numero de PR invalido: $PR" >&2; exit 1; }
+          mkdir -p "$SCREENSHOT_DIR"
+          node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 4174 --strictPort --base "/pr/${PR}/" --outDir dist > test-results/pr-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true; wait "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          READY=false
+          for i in $(seq 1 60); do
+            kill -0 "$PREVIEW_PID" 2>/dev/null || { cat test-results/pr-preview.log; exit 1; }
+            if curl --fail --silent --max-time 2 "$BASE_URL/" > /dev/null; then
+              READY=true
+              break
+            fi
+            sleep 1
+          done
+          [ "$READY" = true ] || { cat test-results/pr-preview.log; exit 1; }
+          npm run test:ui
+
+      - name: guardar resultados do artifact final
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-results-final
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: guardar artifact do deploy
         if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
         uses: actions/upload-artifact@v4

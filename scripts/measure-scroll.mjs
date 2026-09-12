@@ -1,9 +1,10 @@
 import { chromium } from 'playwright'
 
 // Use production preview URLs and run alone: other browser workloads skew timings.
-const base = process.env.BASE_URL ?? 'http://127.0.0.1:4173'
+const normalize = url => url.replace(/\/+$/, '')
+const base = normalize(process.env.BASE_URL ?? 'http://127.0.0.1:4173')
 const targets = [['before', base]]
-if (process.env.COMPARE_URL) targets.push(['after', process.env.COMPARE_URL])
+if (process.env.COMPARE_URL) targets.push(['after', normalize(process.env.COMPARE_URL)])
 const runs = Number(process.env.RUNS ?? 3)
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_PATH || undefined,
@@ -16,7 +17,7 @@ try {
   // Warm each build's shaders before collecting comparable samples.
   for (const [, url] of targets) {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
-    await page.goto(`${url}/new`)
+    await page.goto(`${url}/`)
     await page.waitForTimeout(2500)
     await page.close()
   }
@@ -32,6 +33,15 @@ try {
           window.__work.maps++
           window.__work.pngMs += performance.now() - start
           return result
+        }
+        const toBlob = HTMLCanvasElement.prototype.toBlob
+        HTMLCanvasElement.prototype.toBlob = function (callback, ...args) {
+          const start = performance.now()
+          return toBlob.call(this, blob => {
+            window.__work.maps++
+            window.__work.pngMs += performance.now() - start
+            callback(blob)
+          }, ...args)
         }
         const createImageData = CanvasRenderingContext2D.prototype.createImageData
         CanvasRenderingContext2D.prototype.createImageData = function (...args) {
@@ -53,7 +63,7 @@ try {
       })
       const client = await page.context().newCDPSession(page)
       await client.send('Performance.enable')
-      await page.goto(`${url}/new`)
+      await page.goto(`${url}/`)
       await page.locator('.hero h1').waitFor()
       await page.evaluate(() => document.fonts.ready)
       await page.waitForTimeout(1600)

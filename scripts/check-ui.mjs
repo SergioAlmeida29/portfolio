@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import { chromium } from 'playwright'
 
-// Use a root-base built preview for the pre-app-JS fallback checks.
-const base = process.env.BASE_URL ?? 'http://127.0.0.1:5173'
+const base = (process.env.BASE_URL ?? 'http://127.0.0.1:5173').replace(/\/+$/, '')
+const prBase = /^\/pr\/\d+\/?$/.test(new URL(base).pathname)
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_PATH || undefined,
   args: ['--enable-unsafe-swiftshader'],
@@ -19,12 +19,14 @@ try {
     const previousErrors = errors.length
     const page = await browser.newPage({ viewport: { width, height }, locale: 'en-US' })
     page.on('pageerror', error => errors.push(`${width}: ${error.message}`))
-    await page.goto(`${base}/new`)
+    assert.equal((await page.goto(`${base}/`))?.status(), 200, `${width}: root response`)
     await page.locator('.hero h1').waitFor()
     await page.evaluate(() => document.fonts.ready)
     await page.waitForTimeout(1300)
     assert.equal(await page.locator('.nav-progress, .preview-switcher').count(), 0)
+    assert.equal(await page.locator('html').getAttribute('data-preview'), 'liquid-glass')
     assert.deepEqual(await page.locator('.nav-sections a').evaluateAll(links => links.map(link => link.hash)), sectionIds.map(id => `#${id}`))
+    assert.equal(await page.locator('.nav-cv').getAttribute('href'), new URL(`${base}/Sergio-Almeida-CV.pdf`).pathname)
     assert.equal(await page.locator('.nav-sections [aria-current]').count(), 0)
     assert.ok(await page.locator('html').evaluate(el => el.classList.contains('lenis')))
     assert.equal(await page.locator('.nav-shell feDisplacementMap').count(), 3, 'navigation retains full RGB refraction')
@@ -40,7 +42,7 @@ try {
       const mask = page.locator('#contact [data-empty-backdrop] > [data-lg-layer]').nth(1)
       assert.equal(await mask.evaluate(el => getComputedStyle(el).maskImage), 'none', 'offscreen contact mask must stay lazy')
     }
-    await save(page, `new-${width}-hero`)
+    await save(page, `root-${width}-hero`)
     const cta = await page.locator('.hero-actions a').first().boundingBox()
     if (width >= 1024 && cta.y + cta.height > height) errors.push(`${width}: primary CTA below fold`)
     for (const id of sectionIds) {
@@ -61,7 +63,7 @@ try {
           const image = new Image()
           image.src = url
           await image.decode()
-          return image.naturalWidth > 0 && image.naturalHeight > 0
+          return image.naturalWidth === 512 && image.naturalHeight === 512
         }), 'lazy mask must contain a decodable image, not just a mounted layer')
       }
       const active = await page.locator('.nav-sections [aria-current]').getAttribute('href')
@@ -70,7 +72,7 @@ try {
       if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) errors.push(`${width}/${id}: page overflow`)
       const clipped = await page.locator(`#${id}`).evaluate(el => Array.from(el.querySelectorAll('.contribution-row, .project-grid, .disclosure-head, h2, h3')).filter(node => node.scrollWidth > node.clientWidth + 2).map(node => node.className))
       if (clipped.length) errors.push(`${width}/${id}: clipped ${clipped.join(', ')}`)
-      if (['work', 'contact'].includes(id) && [1280, 390].includes(width)) await save(page, `new-${width}-${id}`)
+      if (['work', 'contact'].includes(id) && [1280, 390].includes(width)) await save(page, `root-${width}-${id}`)
     }
 
     const button = page.locator('#work button[aria-expanded]').first()
@@ -85,7 +87,7 @@ try {
     assert.ok(after.height > before.height, 'accordion expanded')
     assert.equal(Math.round(after.width), Math.round(before.width), 'glass must not stretch horizontally')
     assert.equal(await panel.evaluate(el => getComputedStyle(el, '::after').display), 'none', 'no stretching central sheen')
-    if ([1280, 390].includes(width)) await save(page, `new-${width}-expanded`)
+    if ([1280, 390].includes(width)) await save(page, `root-${width}-expanded`)
     await page.keyboard.press('Enter')
     await page.waitForTimeout(600)
 
@@ -133,9 +135,17 @@ try {
     await page.close()
   }
 
+  if (!prBase) {
+    const previewPage = await browser.newPage({ viewport: { width: 390, height: 844 }, locale: 'en-US' })
+    assert.equal((await previewPage.goto(`${base}/pr/36/`))?.status(), 200, 'PR preview response')
+    await previewPage.locator('.hero h1').waitFor()
+    assert.equal(await previewPage.locator('html').getAttribute('data-preview'), 'liquid-glass', 'PR preview must render the final experience')
+    await previewPage.close()
+  }
+
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' })
   const client = await page.context().newCDPSession(page)
-  await page.goto(`${base}/new`)
+  assert.equal((await page.goto(`${base}/`))?.status(), 200, 'reduced motion response')
   await page.locator('.now-card').waitFor()
   assert.equal(await page.locator('[data-empty-backdrop]').count(), 4)
   assert.ok(await page.locator('[data-empty-backdrop]').evaluateAll(panels =>
@@ -146,7 +156,7 @@ try {
     { name: 'prefers-reduced-motion', value: 'reduce' },
     { name: 'prefers-reduced-transparency', value: 'reduce' },
   ] })
-  await page.goto(`${base}/new`)
+  assert.equal((await page.goto(`${base}/`))?.status(), 200, 'reduced transparency response')
   await page.locator('.now-card[data-opaque]').waitFor()
   assert.equal(await page.locator('html').evaluate(el => el.classList.contains('lenis')), false)
   assert.equal(await page.locator('.now-card').evaluate(el => getComputedStyle(el).backdropFilter), 'none')
@@ -159,21 +169,32 @@ try {
   await page.waitForTimeout(500)
   assert.equal(await button.getAttribute('aria-expanded'), 'true', 'preference change must not remount content')
   assert.ok(await page.locator('html').evaluate(el => el.classList.contains('lenis')))
-  for (const route of ['/v1', '/v2', '/v3']) {
-    await page.goto(`${base}${route}`)
-    await page.locator('main h1').waitFor()
-    assert.equal(await page.locator('.hero').count(), 0, `${route} must be removed`)
+  if (!prBase) {
+    for (const route of ['/v1', '/v2', '/v3']) {
+      assert.equal((await page.goto(`${base}${route}`))?.status(), 200, `${route} response`)
+      await page.locator('main h1').waitFor()
+      assert.equal(await page.locator('.hero').count(), 0, `${route} must be removed`)
+    }
   }
-  await page.goto(`${base}/new/`)
+  assert.equal((await page.goto(`${base}/`))?.status(), 200, 'final root response')
   await page.locator('.hero h1').waitFor()
-  assert.equal(await page.locator('html').getAttribute('data-preview'), 'new', '/new/ must render the preview')
-  await page.goto(`${base}/`)
-  await page.locator('.hero h1').waitFor()
-  assert.equal(await page.locator('html').getAttribute('data-preview'), null)
-  assert.equal(await page.locator('header .nav-sections').count(), 0, '/ must retain its original navigation')
-  assert.equal(await page.locator('header nav a[href^="#"]').count(), 4, '/ must retain its original three section links and Contact CTA')
-  assert.match(await page.locator('#work button[aria-expanded]').first().getAttribute('class'), /w-full/, '/ disclosures must retain full-row activation')
+  assert.equal(await page.locator('html').getAttribute('data-preview'), 'liquid-glass')
+  assert.equal(await page.locator('header .nav-sections').count(), 1, '/ must render the final navigation')
+  assert.equal(await page.locator('header .nav-sections a').count(), 6, '/ must render all section links')
+  assert.match(await page.locator('#work button[aria-expanded]').first().getAttribute('class'), /disclosure-toggle/, 'final disclosures must use the glass layout')
   await page.close()
+
+  const hashPage = await browser.newPage({ viewport: { width: 390, height: 844 }, locale: 'en-US' })
+  assert.equal((await hashPage.goto(`${base}/#education`))?.status(), 200, 'hash response')
+  await hashPage.locator('#education').waitFor()
+  await hashPage.waitForTimeout(250)
+  assert.ok(await hashPage.evaluate(() => {
+    const target = document.getElementById('education')
+    const offset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-offset')) || 0
+    return target && Math.abs(target.getBoundingClientRect().top - offset) < 8
+  }), 'direct hash links must account for the fixed navigation')
+  await hashPage.close()
+
   console.log(JSON.stringify({ reports, errors }, null, 2))
   assert.deepEqual(errors, [])
 } finally {

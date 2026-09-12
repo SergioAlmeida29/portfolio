@@ -75,7 +75,10 @@ export function Water({ className }: { className?: string }) {
       stencil: false,
       powerPreference: 'low-power',
     })
-    if (!context) return
+    if (!context) {
+      document.documentElement.dataset.water = 'fallback'
+      return
+    }
 
     const canvas = el
     const gl = context
@@ -105,7 +108,7 @@ export function Water({ className }: { className?: string }) {
       stop()
       ready = false
       presented = false
-      delete document.documentElement.dataset.water
+      document.documentElement.dataset.water = 'fallback'
       gl.useProgram(null)
       gl.bindBuffer(gl.ARRAY_BUFFER, null)
       if (buffer) gl.deleteBuffer(buffer)
@@ -116,6 +119,7 @@ export function Water({ className }: { className?: string }) {
     }
 
     function initialize() {
+      document.documentElement.dataset.water = 'loading'
       let vs: WebGLShader | null = null
       let fs: WebGLShader | null = null
       try {

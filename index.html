@@ -3,8 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <script>
-      if (['/new', '/new/'].includes(location.pathname) || /^\/pr\/\d+\//.test(location.pathname)) {
-        document.documentElement.dataset.preview = 'new'
+      if (location.pathname === '/' || location.pathname === '/index.html' || /^\/pr\/\d+(?:\/|$)/.test(location.pathname)) {
+        document.documentElement.dataset.preview = 'liquid-glass'
+        document.documentElement.dataset.water = 'loading'
       }
     </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

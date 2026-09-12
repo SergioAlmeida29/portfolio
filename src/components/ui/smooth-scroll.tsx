@@ -24,9 +24,21 @@ export function SmoothScroll() {
       }
     }
     sync()
+    const initialHashFrame = requestAnimationFrame(() => {
+      if (!window.location.hash) return
+      let id = window.location.hash.slice(1)
+      try { id = decodeURIComponent(id) } catch {}
+      const target = document.getElementById(id)
+      if (!target) return
+      const offset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-offset')) || 0
+      const top = target.getBoundingClientRect().top + window.scrollY - offset
+      if (lenis) lenis.scrollTo(top, { immediate: true })
+      else window.scrollTo({ top, behavior: 'instant' })
+    })
     preference.addEventListener('change', sync)
 
     return () => {
+      cancelAnimationFrame(initialHashFrame)
       preference.removeEventListener('change', sync)
       lenis?.destroy()
     }
