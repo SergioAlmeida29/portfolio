@@ -3,6 +3,7 @@ import { animate, motion, useMotionValue, useReducedMotion, useSpring } from 'mo
 import { useEffect, useState, type PointerEvent, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { EmptyBackdropGlass } from './empty-backdrop-glass'
+import { Reveal } from './reveal'
 
 const optics: Partial<GlassOptics> = {
   strength: 0.24,
@@ -21,31 +22,34 @@ const optics: Partial<GlassOptics> = {
   glowSpread: 0.08,
 }
 const navigationOptics = { ...optics, frost: 7 }
-// A sole child of a transparent filtered Reveal has no backdrop pixels to bend.
-// Keep its identical specular map, tint and edge light; skip sampling empty RGB.
-const emptyBackdropOptics = { ...optics, strength: 0, dispersion: 0 }
-const opaqueOptics = { ...optics, strength: 0, dispersion: 0, frost: 0, saturate: 1, brightness: 0, specular: 0, sheen: 0, glow: 0 }
-const panelStyle = { display: 'block', position: 'relative', width: '100%' } as const
-const opaqueStyle = { ...panelStyle, background: '#0a1c2e', backdropFilter: 'none', WebkitBackdropFilter: 'none' } as const
+const materialStyle = { display: 'block', position: 'absolute', inset: 0, borderRadius: 'inherit' } as const
 
-export function GlassPanel({
-  children,
-  className,
-  surface = 'panel',
-  emptyBackdrop = false,
-  defer = false,
-}: {
+type PanelProps = {
   children: ReactNode
   className?: string
-  surface?: 'panel' | 'navigation'
-  /** Only valid as the sole child of a transparent, filtered backdrop root. */
-  emptyBackdrop?: boolean
-  /** Delay a below-fold specular-map generation until the panel approaches view. */
+}
+
+export function GlassPanel({ delay = 0, ...props }: PanelProps & { delay?: number; defer?: boolean }) {
+  return (
+    <Reveal delay={delay}>
+      <div className="glass-backdrop">
+        <GlassSurface {...props} />
+      </div>
+    </Reveal>
+  )
+}
+
+export function NavigationGlass(props: PanelProps) {
+  return <GlassSurface {...props} navigation />
+}
+
+function GlassSurface({ children, className, navigation = false, defer = false }: PanelProps & {
+  navigation?: boolean
   defer?: boolean
 }) {
   const reducedMotion = useReducedMotion()
   const [opaque, setOpaque] = useState(() => matchMedia('(prefers-reduced-transparency: reduce)').matches)
-  const [navigationReady, setNavigationReady] = useState(surface !== 'navigation')
+  const [navigationReady, setNavigationReady] = useState(false)
   const x = useSpring(0, { stiffness: 450, damping: 40 })
   const y = useSpring(0, { stiffness: 450, damping: 40 })
   const opacity = useMotionValue(0)
@@ -58,26 +62,15 @@ export function GlassPanel({
   }, [])
 
   useEffect(() => {
-    if (surface !== 'navigation' || navigationReady) return
-    let disposed = false
-    const reveal = () => {
-      if (!disposed) setNavigationReady(true)
+    if (!navigation) return
+    const reveal = () => setNavigationReady(true)
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(reveal, { timeout: 500 })
+      return () => window.cancelIdleCallback(id)
     }
-    const requestIdle = (window as Window & { requestIdleCallback?: typeof window.requestIdleCallback }).requestIdleCallback
-    if (requestIdle) {
-      const id = requestIdle.call(window, reveal, { timeout: 500 })
-      const cancelIdle = (window as Window & { cancelIdleCallback?: (handle: number) => void }).cancelIdleCallback
-      return () => {
-        disposed = true
-        cancelIdle?.call(window, id)
-      }
-    }
-    const id = globalThis.setTimeout(reveal, 0)
-    return () => {
-      disposed = true
-      globalThis.clearTimeout(id)
-    }
-  }, [navigationReady, surface])
+    const id = window.setTimeout(reveal, 0)
+    return () => window.clearTimeout(id)
+  }, [navigation])
 
   useEffect(() => {
     if (opaque || reducedMotion) opacity.set(0)
@@ -98,23 +91,11 @@ export function GlassPanel({
     }
   }
 
-  if (surface === 'navigation' && !navigationReady) {
-    return <div className={cn('liquid-panel', className)} data-surface={surface} data-opaque={opaque || undefined} style={opaque ? opaqueStyle : panelStyle}>{children}</div>
-  }
-  if (opaque && !emptyBackdrop) {
-    return <div className={cn('liquid-panel', className)} data-surface={surface} data-opaque style={opaqueStyle}><div className="glass-content">{children}</div></div>
-  }
-  const Material = emptyBackdrop && surface === 'panel' ? EmptyBackdropGlass : Glass
-
   return (
-    <Material
+    <div
       className={cn('liquid-panel', className)}
-      data-surface={surface}
-      data-empty-backdrop={emptyBackdrop || undefined}
+      data-surface={navigation ? 'navigation' : 'panel'}
       data-opaque={opaque || undefined}
-      style={panelStyle}
-      optics={opaque ? opaqueOptics : surface === 'navigation' ? navigationOptics : emptyBackdrop ? emptyBackdropOptics : optics}
-      {...(emptyBackdrop ? { defer } : {})}
       onPointerEnter={(event) => {
         track(event)
         if (event.pointerType === 'mouse' && !reducedMotion && !opaque) {
@@ -127,10 +108,15 @@ export function GlassPanel({
         animate(opacity, 0, { duration: 0.3 })
       }}
     >
+      {!opaque && (navigation
+        ? navigationReady
+          ? <Glass aria-hidden className="glass-material" style={materialStyle} optics={navigationOptics}><></></Glass>
+          : <div aria-hidden className="glass-material" />
+        : <EmptyBackdropGlass optics={optics} defer={defer} />)}
       <motion.span aria-hidden className="glass-pointer-rim" style={{ opacity }}>
         <motion.span className="glass-pointer-light" style={{ x, y }} />
       </motion.span>
       <div className="glass-content">{children}</div>
-    </Material>
+    </div>
   )
 }

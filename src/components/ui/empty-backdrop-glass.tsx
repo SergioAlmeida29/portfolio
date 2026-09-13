@@ -1,9 +1,9 @@
 import type { GlassOptics } from '@samasante/liquid-glass'
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type HTMLAttributes } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { getSpecularMap, specularDefaults } from '../../lib/specular-map'
 
-export interface EmptyBackdropGlassProps extends HTMLAttributes<HTMLDivElement> {
-  optics?: Partial<GlassOptics>
+interface EmptyBackdropGlassProps {
+  optics: Partial<GlassOptics>
   defer?: boolean
 }
 
@@ -13,7 +13,7 @@ const layer: CSSProperties = {
 
 /** Only for empty backdrop roots: native frost and a stationary, cached B mask. */
 export function EmptyBackdropGlass({
-  optics, children, className, style, defer = false, ...rest
+  optics, defer = false,
 }: EmptyBackdropGlassProps) {
   const root = useRef<HTMLDivElement>(null)
   const mask = useRef<HTMLDivElement>(null)
@@ -24,7 +24,6 @@ export function EmptyBackdropGlass({
       /\b(?:Chrome|Chromium|Edg)\//.test(ua) && !/\b(?:CriOS|EdgiOS|FxiOS|OPiOS)\b/.test(ua) && !/iPhone|iPad|iPod/.test(ua)
   })
   const [nearViewport, setNearViewport] = useState(!defer)
-  const mapRequest = useRef(0)
   const o = { ...specularDefaults, ...optics }
   const enabled = nearViewport && supportsRefraction && o.specular > 0 && (o.glow > 0 || o.sheen > 0)
   const brightness = Math.min(1, Math.abs(o.brightness))
@@ -52,6 +51,7 @@ export function EmptyBackdropGlass({
   useLayoutEffect(() => {
     const el = root.current, overlay = mask.current
     if (!el || !overlay || !enabled) return
+    let mapRequest = 0
     const measure = () => {
       const cs = getComputedStyle(el)
       const { width, height } = el.getBoundingClientRect()
@@ -67,16 +67,16 @@ export function EmptyBackdropGlass({
         overlay.style.visibility = 'hidden'
         return
       }
-      const request = ++mapRequest.current
+      const request = ++mapRequest
       overlay.style.visibility = 'hidden'
       void getSpecularMap(width, height, radius, optics).then((url) => {
-        if (request !== mapRequest.current || !overlay.isConnected) return
+        if (request !== mapRequest || !overlay.isConnected) return
         const image = `url("${url}")`
         overlay.style.maskImage = image
         overlay.style.webkitMaskImage = image
         overlay.style.visibility = 'visible'
       }, () => {
-        if (request === mapRequest.current) overlay.style.visibility = 'hidden'
+        if (request === mapRequest) overlay.style.visibility = 'hidden'
       })
     }
     measure()
@@ -84,20 +84,19 @@ export function EmptyBackdropGlass({
     observer.observe(el)
     return () => {
       observer.disconnect()
+      mapRequest++
     }
-  }, [optics, className, style, enabled, brightness, o.brightness, mapKey])
+  }, [optics, enabled, brightness, o.brightness, mapKey])
 
   return (
-    <div {...rest} ref={root} data-liquid-glass="empty-backdrop" className={className}
-      style={{ display: 'block', position: 'relative', ...style,
-        backdropFilter: backdrop, WebkitBackdropFilter: backdrop }}>
+    <div ref={root} aria-hidden data-liquid-glass="empty-backdrop" className="glass-material"
+      style={{ backdropFilter: backdrop, WebkitBackdropFilter: backdrop }}>
       <div aria-hidden data-lg-layer="" style={{ ...layer,
         background: o.brightness > 0 ? '#fff' : '#000', opacity: brightness }} />
       <div ref={mask} aria-hidden data-lg-layer="" style={{ ...layer,
         display: enabled ? undefined : 'none', visibility: 'hidden', opacity: o.specular,
         maskSize: '100% 100%', WebkitMaskSize: '100% 100%',
         maskRepeat: 'no-repeat', WebkitMaskRepeat: 'no-repeat' }} />
-      {children}
       <div aria-hidden data-lg-layer="" style={{ ...layer, boxShadow: [
         `inset 0 1px 0 rgba(255,255,255,${(0.55 * gain).toFixed(3)})`,
         `inset 0 0 0 1px rgba(255,255,255,${(0.12 * gain).toFixed(3)})`,

@@ -2,12 +2,12 @@ import { motion, useReducedMotion, useScroll } from 'motion/react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useContent } from '../content'
 import { baseUrl, cvUrl } from '../lib/base'
-import { isLiquidGlass } from '../lib/preview'
+import { isHome } from '../lib/route'
 import { LangToggle } from './LangToggle'
-import { GlassPanel } from './ui/glass-panel'
+import { NavigationGlass } from './ui/glass-panel'
 
 export function Nav() {
-  return isLiquidGlass ? <PreviewNav /> : <DefaultNav />
+  return isHome ? <HomeNav /> : <DefaultNav />
 }
 
 function DefaultNav() {
@@ -58,7 +58,7 @@ function DefaultNav() {
   )
 }
 
-function PreviewNav() {
+function HomeNav() {
   const { nav, ui } = useContent()
   const header = useRef<HTMLElement>(null)
   const strip = useRef<HTMLElement>(null)
@@ -142,7 +142,7 @@ function PreviewNav() {
 
   return (
     <header ref={header} className="glass-nav fixed inset-x-0 top-0 z-40">
-      <GlassPanel className="nav-shell" surface="navigation">
+      <NavigationGlass className="nav-shell">
         <div className="nav-inner">
           <a href="#top" className="nav-brand">
             Sérgio Almeida
@@ -179,7 +179,7 @@ function PreviewNav() {
             <LangToggle />
           </div>
         </div>
-      </GlassPanel>
+      </NavigationGlass>
     </header>
   )
 }

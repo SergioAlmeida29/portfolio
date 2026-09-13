@@ -47,10 +47,11 @@ try {
       await page.reload()
       await aligned(page, 'work')
 
-      for (const route of ['missing-page', 'new', 'v1', 'v2', 'v3']) {
+      for (const route of ['missing-page', 'new', 'v1', 'v2', 'v3', 'pr/36/']) {
         await page.goto(`${base}/${route}`)
         await page.locator('main h1').waitFor()
         assert.equal(await page.locator('.hero').count(), 0, `${route}: unknown routes must show NotFound`)
+        assert.equal(await page.locator('html').getAttribute('data-route'), 'not-found')
         assert.equal(await page.locator('html').getAttribute('data-preview'), null)
         assert.deepEqual(await page.locator('header a[href*="#"]').evaluateAll(links => links.map(link => link.getAttribute('href'))),
           ['top', 'work', 'open-source', 'projects', 'contact'].map(id => `${home}#${id}`), '404 links must target the home base')
@@ -63,6 +64,8 @@ try {
       await aligned(page, 'work')
       await page.goto(`${base}/index.html`)
       await page.locator('.hero h1').waitFor()
+      assert.equal(await page.locator('html').getAttribute('data-route'), 'home')
+      assert.equal(await page.locator('html').getAttribute('data-preview'), 'liquid-glass')
       await page.evaluate(() => document.fonts.ready)
       await page.waitForFunction(() => document.querySelectorAll('.nav-shell feDisplacementMap').length === 3)
       assert.equal(await page.locator('html').evaluate(el => el.classList.contains('lenis')), reducedMotion === 'no-preference')

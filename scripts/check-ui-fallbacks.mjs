@@ -30,13 +30,13 @@ for (const [name, engine, options] of [
             assert.equal(await page.locator('html').getAttribute('data-water'), 'fallback', label)
             assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el, '::before').display), 'block', `${label}: static background fallback`)
           }
-          assert.equal(await page.locator('[data-empty-backdrop]').count(), 4, `${label}: fallback cards`)
-          assert.ok(await page.locator('[data-empty-backdrop]').evaluateAll(panels => panels.every(panel => {
+          assert.equal(await page.locator('[data-liquid-glass="empty-backdrop"]').count(), 4, `${label}: fallback cards`)
+          assert.ok(await page.locator('[data-liquid-glass="empty-backdrop"]').evaluateAll(panels => panels.every(panel => {
             const style = getComputedStyle(panel)
             return (style.backdropFilter || style.webkitBackdropFilter || 'none') !== 'none'
           })), `${label}: native frost remains available`)
           if (name !== 'chromium-no-webgl') {
-            assert.ok(await page.locator('[data-empty-backdrop] > [data-lg-layer]:nth-child(2)').evaluateAll(layers =>
+            assert.ok(await page.locator('[data-liquid-glass="empty-backdrop"] > [data-lg-layer]:nth-child(2)').evaluateAll(layers =>
               layers.length === 4 && layers.every(layer => getComputedStyle(layer).display === 'none'),
             ), `${label}: unsupported refraction uses native fallback`)
           }
