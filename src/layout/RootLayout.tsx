@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { Nav } from '../components/Nav'
 import { SiteFooter } from '../components/SiteFooter'
+import { SmoothScroll } from '../components/ui/smooth-scroll'
 import { Water } from '../components/ui/water'
 import { useContent } from '../content'
 import { isLiquidGlass } from '../lib/preview'
@@ -9,28 +10,6 @@ const isStaging = import.meta.env.VITE_APP_ENV === 'staging'
 
 export function RootLayout({ children }: { children: ReactNode }) {
   const { ui } = useContent()
-
-  useEffect(() => {
-    if (!isLiquidGlass) return
-    let frame = 0
-    const alignHash = () => {
-      cancelAnimationFrame(frame)
-      frame = requestAnimationFrame(() => {
-        let id = window.location.hash.slice(1)
-        try { id = decodeURIComponent(id) } catch {}
-        const target = document.getElementById(id)
-        if (!target) return
-        const offset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-offset')) || 0
-        window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - offset, behavior: 'instant' })
-      })
-    }
-    alignHash()
-    window.addEventListener('hashchange', alignHash)
-    return () => {
-      cancelAnimationFrame(frame)
-      window.removeEventListener('hashchange', alignHash)
-    }
-  }, [])
 
   useEffect(() => {
     if (!isLiquidGlass) return
@@ -59,6 +38,7 @@ export function RootLayout({ children }: { children: ReactNode }) {
         </div>
       )}
 
+      {isLiquidGlass && <SmoothScroll />}
       {isLiquidGlass && <Water />}
       <Nav />
       <main id="main">

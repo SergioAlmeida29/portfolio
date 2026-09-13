@@ -40,6 +40,9 @@ for (const [name, engine, options] of [
               layers.length === 4 && layers.every(layer => getComputedStyle(layer).display === 'none'),
             ), `${label}: unsupported refraction uses native fallback`)
           }
+          if (reducedMotion === 'reduce') {
+            assert.equal(await page.locator('html').evaluate(el => el.classList.contains('lenis')), false, label)
+          }
           const button = page.locator('#work button[aria-expanded]').first()
           await button.scrollIntoViewIfNeeded()
           await button.focus()
@@ -126,6 +129,7 @@ try {
       await button.scrollIntoViewIfNeeded()
       await button.click()
       await page.emulateMedia({ reducedMotion: 'reduce' })
+      await page.waitForFunction(() => !document.documentElement.classList.contains('lenis'))
       await page.waitForTimeout(150)
       const stopped = await page.evaluate(() => window.waterProbe.draws)
       await page.waitForTimeout(250)
@@ -160,6 +164,7 @@ try {
        { name: 'prefers-reduced-motion', value: 'reduce' },
        { name: 'prefers-reduced-transparency', value: 'reduce' },
       ] })
+      await page.waitForFunction(() => !document.documentElement.classList.contains('lenis'))
       await page.waitForFunction(() => document.documentElement.dataset.transparency === 'reduced')
       await page.locator('.now-card[data-opaque]').waitFor()
       const panels = page.locator('.liquid-panel, .glass, .glass-panel, .glass-nav, .glass-soft')

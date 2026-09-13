@@ -147,7 +147,7 @@ function PreviewNav() {
           <a href="#top" className="nav-brand">
             Sérgio Almeida
           </a>
-          <motion.nav ref={strip} className="nav-sections" aria-label={ui.menu} layoutScroll>
+          <motion.nav ref={strip} className="nav-sections" aria-label={ui.menu} layoutScroll data-lenis-prevent>
             {nav.links.map((link) => (
               <a
                 key={link.href}

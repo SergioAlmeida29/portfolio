@@ -6,6 +6,7 @@ html[data-preview] {
   scroll-padding-top: var(--nav-offset);
   scrollbar-color: var(--color-line-bright) var(--color-bg);
 }
+html[data-preview].lenis { scroll-behavior: auto; }
 /* Keep the base color and water canvas, not the legacy CSS backdrop. */
 html[data-preview] body::before,
 html[data-preview] body::after,
