@@ -202,4 +202,5 @@ try {
   await browser.close()
 }
 
+await import('./check-ui-navigation.mjs')
 await import('./check-ui-fallbacks.mjs')

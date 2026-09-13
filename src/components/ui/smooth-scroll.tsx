@@ -7,6 +7,7 @@ export function SmoothScroll() {
     const preference = matchMedia('(prefers-reduced-motion: reduce)')
     let lenis: Lenis | undefined
     let frame = 0
+    let clickedHash: string | undefined
 
     const alignHash = () => {
       cancelAnimationFrame(frame)
@@ -14,10 +15,14 @@ export function SmoothScroll() {
         let id = window.location.hash.slice(1)
         try { id = decodeURIComponent(id) } catch {}
         const target = document.getElementById(id)
-        if (!target) return
+        if (!target) {
+          lenis?.scrollTo(window.scrollY, { immediate: true })
+          return
+        }
         const offset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-offset')) || 0
-        if (lenis) lenis.scrollTo(target, { immediate: true })
-        else window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - offset, behavior: 'instant' })
+        const top = target.getBoundingClientRect().top + window.scrollY - offset
+        if (lenis) lenis.scrollTo(top, { immediate: true })
+        else window.scrollTo({ top, behavior: 'instant' })
       })
     }
 
@@ -36,14 +41,23 @@ export function SmoothScroll() {
 
     sync()
     alignHash()
+    const onClick = (event: MouseEvent) => {
+      const link = event.composedPath().find((node): node is HTMLAnchorElement => node instanceof HTMLAnchorElement)
+      const url = link?.href ? new URL(link.href) : undefined
+      clickedHash = url?.origin === location.origin && url.pathname === location.pathname ? url.hash : undefined
+    }
     const onHashChange = () => {
-      if (!lenis) alignHash()
+      const handledByLenis = lenis && clickedHash === location.hash
+      clickedHash = undefined
+      if (!handledByLenis) alignHash()
     }
     preference.addEventListener('change', sync)
+    window.addEventListener('click', onClick)
     window.addEventListener('hashchange', onHashChange)
     return () => {
       cancelAnimationFrame(frame)
       preference.removeEventListener('change', sync)
+      window.removeEventListener('click', onClick)
       window.removeEventListener('hashchange', onHashChange)
       lenis?.destroy()
     }

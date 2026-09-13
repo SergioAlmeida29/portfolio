@@ -1,7 +1,7 @@
 import { motion, useReducedMotion, useScroll } from 'motion/react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useContent } from '../content'
-import { cvUrl } from '../lib/base'
+import { baseUrl, cvUrl } from '../lib/base'
 import { isLiquidGlass } from '../lib/preview'
 import { LangToggle } from './LangToggle'
 import { GlassPanel } from './ui/glass-panel'
@@ -17,7 +17,7 @@ function DefaultNav() {
   return (
     <header className="glass-nav fixed inset-x-0 top-0 z-40">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 md:px-10 xl:max-w-7xl">
-        <a href="#top" className="text-sm font-medium tracking-tight">
+        <a href={`${baseUrl}#top`} className="text-sm font-medium tracking-tight">
           Sérgio Almeida
         </a>
 
@@ -25,7 +25,7 @@ function DefaultNav() {
           {nav.links.slice(0, 3).map((link) => (
             <a
               key={link.href}
-              href={link.href}
+              href={`${baseUrl}${link.href}`}
               className="hidden text-muted transition-colors hover:text-fg md:inline"
             >
               {link.label}
@@ -41,7 +41,7 @@ function DefaultNav() {
           </a>
           <LangToggle />
           <a
-            href="#contact"
+            href={`${baseUrl}#contact`}
             className="glass-soft rounded-full px-4 py-1.5 text-fg transition-colors hover:border-white/20 hover:bg-white/[0.07]"
           >
             {nav.contact}

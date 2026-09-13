@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <script>
-      if (location.pathname === '/' || location.pathname === '/index.html' || /^\/pr\/\d+(?:\/|$)/.test(location.pathname)) {
+      if (location.pathname === '/' || location.pathname === '/index.html' || /^\/pr\/\d+(?:\/(?:index\.html)?)?$/.test(location.pathname)) {
         document.documentElement.dataset.preview = 'liquid-glass'
         document.documentElement.dataset.water = 'loading'
         if (matchMedia('(prefers-reduced-transparency: reduce)').matches) {
