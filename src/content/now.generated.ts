@@ -1,12 +1,8 @@
 export const now = {
-  "commits": 12,
-  "pullRequests": 16,
-  "issues": 1,
-  "repos": [
-    "unoplatform/uno",
-    "dotnet/aspnetcore",
-    "ATUNAFE/Website"
-  ],
+  "commits": 0,
+  "pullRequests": 5,
+  "issues": 9,
+  "repos": [],
   "contributions": [
     {
       "repo": "unoplatform/uno",
@@ -37,5 +33,5 @@ export const now = {
     }
   ],
   "days": 7,
-  "collectedAt": "2026-09-03T19:31:35.468Z"
+  "collectedAt": "2026-09-13T10:53:44.830Z"
 } as const

@@ -1,13 +1,27 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { Nav } from '../components/Nav'
 import { SiteFooter } from '../components/SiteFooter'
+import { SmoothScroll } from '../components/ui/smooth-scroll'
 import { Water } from '../components/ui/water'
 import { useContent } from '../content'
+import { isLiquidGlass } from '../lib/preview'
 
 const isStaging = import.meta.env.VITE_APP_ENV === 'staging'
 
 export function RootLayout({ children }: { children: ReactNode }) {
   const { ui } = useContent()
+
+  useEffect(() => {
+    if (!isLiquidGlass) return
+    const preference = matchMedia('(prefers-reduced-transparency: reduce)')
+    const sync = () => {
+      if (preference.matches) document.documentElement.dataset.transparency = 'reduced'
+      else delete document.documentElement.dataset.transparency
+    }
+    sync()
+    preference.addEventListener('change', sync)
+    return () => preference.removeEventListener('change', sync)
+  }, [])
 
   return (
     <div className="min-h-[100dvh]">
@@ -24,7 +38,8 @@ export function RootLayout({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      <Water />
+      {isLiquidGlass && <SmoothScroll />}
+      {isLiquidGlass && <Water />}
       <Nav />
       <main id="main">
         <span id="top" className="absolute" />

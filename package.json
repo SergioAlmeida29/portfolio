@@ -9,13 +9,16 @@
     "build:staging": "node scripts/now.mjs && tsc -b && vite build --mode staging && node scripts/robots.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "lint": "oxlint"
+    "lint": "oxlint",
+    "test:ui": "node scripts/check-ui.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.5",
     "@fontsource-variable/geist-mono": "^5.2.5",
+    "@samasante/liquid-glass": "0.1.1",
     "@tabler/icons-react": "^3.46.0",
     "clsx": "^2.1.1",
+    "lenis": "^1.3.26",
     "motion": "^13.2.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -28,6 +31,7 @@
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
     "oxlint": "^1.79.0",
+    "playwright": "^1.63.0",
     "tailwindcss": "^4.1.14",
     "typescript": "~6.0.2",
     "vite": "^8.2.2"

@@ -1,45 +1,7 @@
-import { motion, useMotionTemplate, useMotionValue } from 'motion/react'
-import type { MotionStyle } from 'motion/react'
-import type { MouseEvent, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { GlassPanel } from './glass-panel'
 
-export function SpotlightCard({
-  children,
-  className,
-}: {
-  children: ReactNode
-  className?: string
-}) {
-  const mouseX = useMotionValue(0)
-  const mouseY = useMotionValue(0)
-
-  const background = useMotionTemplate`radial-gradient(360px circle at ${mouseX}px ${mouseY}px, rgba(76,164,232,0.13), transparent 70%)`
-  const lightX = useMotionTemplate`${mouseX}px`
-  const lightY = useMotionTemplate`${mouseY}px`
-
-  function handleMouseMove(event: MouseEvent<HTMLDivElement>) {
-    const rect = event.currentTarget.getBoundingClientRect()
-    mouseX.set(event.clientX - rect.left)
-    mouseY.set(event.clientY - rect.top)
-  }
-
-  return (
-    <motion.div
-      onMouseMove={handleMouseMove}
-      style={
-        { '--glass-light-x': lightX, '--glass-light-y': lightY } as MotionStyle
-      }
-      className={cn(
-        'group glass relative overflow-hidden rounded-xl',
-        className,
-      )}
-    >
-      <motion.div
-        aria-hidden
-        style={{ background }}
-        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-      />
-      <div className="relative h-full">{children}</div>
-    </motion.div>
-  )
+export function SpotlightCard({ children, className, emptyBackdrop, defer }: { children: ReactNode; className?: string; emptyBackdrop?: boolean; defer?: boolean }) {
+  return <GlassPanel emptyBackdrop={emptyBackdrop} defer={defer} className={cn('glass rounded-xl', className)}>{children}</GlassPanel>
 }
