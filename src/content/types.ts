@@ -47,6 +47,8 @@ export type SiteContent = {
     detail: string
     whatIDid: string
     result: string
+    menu: string
+    language: string
   }
   nav: { links: Link[]; contact: string; cv: string }
   hero: {

@@ -19,12 +19,17 @@ export function WordReveal({
 
   if (reduce) return <span className={className}>{text}</span>
 
-  const animation = inView
-    ? { whileInView: { y: '0%' }, viewport: { once: true, amount: 0.6 } }
-    : { animate: { y: '0%' } }
+  const animation = { variants: { hidden: { y: '115%' }, visible: { y: '0%' } } }
 
   return (
-    <span className={cn('inline-flex flex-wrap', className)}>
+    <motion.span
+      className={cn('inline-flex flex-wrap', className)}
+      // Observe the visible wrapper, not a translated child clipped by overflow.
+      initial="hidden"
+      animate={!inView ? 'visible' : undefined}
+      whileInView={inView ? 'visible' : undefined}
+      viewport={{ once: true, amount: 0.2 }}
+    >
       {words.map((word, i) => (
         <span
           key={i}
@@ -32,7 +37,6 @@ export function WordReveal({
         >
           <motion.span
             className="inline-block will-change-transform"
-            initial={{ y: '115%' }}
             {...animation}
             transition={{
               duration: 0.75,
@@ -40,10 +44,10 @@ export function WordReveal({
               ease: [0.16, 1, 0.3, 1],
             }}
           >
-            {word}
+            {word}{i < words.length - 1 ? ' ' : ''}
           </motion.span>
         </span>
       ))}
-    </span>
+    </motion.span>
   )
 }

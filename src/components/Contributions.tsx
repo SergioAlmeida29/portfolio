@@ -23,9 +23,9 @@ export function Contributions() {
                 href={pr.url}
                 target="_blank"
                 rel="noreferrer"
-                className="group/pr flex flex-col gap-3 py-6 md:flex-row md:items-center md:gap-8"
+                className="contribution-row group/pr flex flex-col gap-3 py-6 md:flex-row md:items-center md:gap-8"
               >
-                <div className="flex items-baseline gap-2.5 md:w-56 md:shrink-0">
+                <div className="contribution-repo flex items-baseline gap-2.5 md:w-56 md:shrink-0">
                   <span className="font-mono text-[13px] text-fg/90">{pr.repo}</span>
                   <span className="font-mono text-[13px] text-muted">#{pr.number}</span>
                 </div>
@@ -34,7 +34,7 @@ export function Contributions() {
                   {pr.title}
                 </p>
 
-                <div className="flex items-center gap-4 md:shrink-0">
+                <div className="contribution-meta flex items-center gap-4 md:shrink-0">
                   {pr.additions !== null && (
                     <span className="font-mono text-[12px] text-muted/80 tabular-nums">
                       +{pr.additions} −{pr.deletions}

@@ -18,8 +18,8 @@ export function Projects() {
                 className="py-6"
                 label={p.name}
                 head={
-                  <div className="md:grid md:grid-cols-12 md:gap-8">
-                    <div className="md:col-span-4">
+                  <div className="project-grid md:grid md:grid-cols-12 md:gap-8">
+                    <div className="project-meta md:col-span-4">
                       <h3 className="text-base font-medium tracking-tight">{p.name}</h3>
                       <p className="mt-1 font-mono text-[11px] text-muted">
                         {p.kind}, {p.when}
@@ -31,12 +31,12 @@ export function Projects() {
                   </div>
                 }
               >
-                <div className="md:grid md:grid-cols-12 md:gap-8">
+                <div className="project-grid md:grid md:grid-cols-12 md:gap-8">
                   <Tags items={p.stack} className="md:col-span-4" />
                   <div className="mt-6 md:col-span-8 md:mt-0">
                     <DetailList title={ui.detail} items={p.detail} />
                     {p.links && (
-                      <div className="mt-5 flex gap-6">
+                      <div className="mt-5 flex flex-wrap gap-6">
                         {p.links.map((l) => (
                           <a
                             key={l.label}

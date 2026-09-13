@@ -5,7 +5,6 @@ dist-ssr/
 
 .env
 .env.*
-!.env.example
 !.env.production
 !.env.staging
 
@@ -18,3 +17,4 @@ coverage/
 infra/cloudflared/*.json
 infra/cloudflared/cert.pem
 infra/**/secrets*
+

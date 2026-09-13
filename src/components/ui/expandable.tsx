@@ -24,52 +24,65 @@ export function Expandable({
   const panelId = useId()
 
   return (
-    <div className={className}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-controls={panelId}
-        className="group/exp flex w-full items-start gap-6 text-left"
-      >
-        <span className="min-w-0 flex-1">{head}</span>
-        <span
-          aria-hidden
-          className="glass-soft mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted transition-colors duration-300 group-hover/exp:border-white/25 group-hover/exp:text-fg"
+    <div className={cn('disclosure', className)}>
+      <div className="disclosure-heading relative">
+        <div className="disclosure-head">{head}</div>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-controls={panelId}
+          aria-label={`${open ? ui.close : ui.open} ${label}`}
+          className="disclosure-toggle group/exp absolute right-0 top-0 grid size-11 place-items-center rounded-full text-muted transition-colors hover:bg-white/10 hover:text-fg"
         >
-          <motion.span
-            className="grid place-items-center"
-            animate={{ rotate: open ? 45 : 0 }}
-            transition={{ duration: reduce ? 0 : 0.35, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <IconPlus size={15} stroke={2} />
-          </motion.span>
-        </span>
-        <span className="sr-only">
-          {open ? `${ui.close} ${label}` : `${ui.open} ${label}`}
-        </span>
-      </button>
+          <span aria-hidden className="glass-soft grid size-8 place-items-center rounded-full">
+            <motion.span
+              className="grid place-items-center"
+              animate={{ rotate: open ? 45 : 0 }}
+              transition={{ duration: reduce ? 0 : 0.35, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <IconPlus size={15} stroke={2} />
+            </motion.span>
+          </span>
+        </button>
+      </div>
 
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            id={panelId}
-            key="panel"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{
-              duration: reduce ? 0 : 0.42,
-              ease: [0.16, 1, 0.3, 1],
-              opacity: { duration: reduce ? 0 : 0.28 },
-            }}
-            className="overflow-hidden"
-          >
-            <div className={cn('pt-6', contentClassName)}>{children}</div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ExpandableContent open={open} panelId={panelId} reduce={reduce} contentClassName={contentClassName}>
+        {children}
+      </ExpandableContent>
     </div>
+  )
+}
+
+function ExpandableContent({
+  open, panelId, reduce, contentClassName, children,
+}: {
+  open: boolean
+  panelId: string
+  reduce: boolean | null
+  contentClassName?: string
+  children: ReactNode
+}) {
+  return (
+    <AnimatePresence initial={false}>
+      {open && (
+        <motion.div
+          id={panelId}
+          key="panel"
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{
+            duration: reduce ? 0 : 0.42,
+            ease: [0.16, 1, 0.3, 1],
+            opacity: { duration: reduce ? 0 : 0.28 },
+          }}
+          className="overflow-hidden"
+        >
+          <div className={cn('pt-6', contentClassName)}>{children}</div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 

@@ -13,7 +13,7 @@ export function Internships() {
       <div className="grid gap-5">
         {internships.roles.map((r, i) => (
           <Reveal key={i} delay={i * 0.08}>
-            <SpotlightCard className="p-7 md:p-9">
+            <SpotlightCard emptyBackdrop defer className="p-7 md:p-9">
               <Expandable
                 label={r.org}
                 head={
@@ -53,7 +53,7 @@ export function Internships() {
                     {r.challenge}
                   </p>
 
-                  <div className="mt-8 grid gap-8 sm:grid-cols-2">
+                    <div className="work-details mt-8 grid gap-8 sm:grid-cols-2">
                     <DetailList title={ui.whatIDid} items={r.did} />
                     <DetailList title={ui.result} items={r.impact} />
                   </div>

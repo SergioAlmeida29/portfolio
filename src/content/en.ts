@@ -16,13 +16,18 @@ export const en: SiteContent = {
     detail: 'Detail',
     whatIDid: 'What I did',
     result: 'Result',
+    menu: 'Menu',
+    language: 'Language',
   },
 
   nav: {
     links: [
       { label: 'Work experience', href: '#work' },
       { label: 'Open source', href: '#open-source' },
-      { label: 'Projects', href: '#projects' },
+      { label: 'Projects and competitions', href: '#projects' },
+      { label: 'Skills', href: '#skills' },
+      { label: 'Education', href: '#education' },
+      { label: 'Contact', href: '#contact' },
     ],
     contact: 'Contact',
     cv: 'CV',

@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { useId } from 'react'
-import { useLang, type Lang } from '../content'
+import { useContent, useLang, type Lang } from '../content'
 import { cn } from '../lib/cn'
 
 const options: { value: Lang; label: string }[] = [
@@ -10,14 +10,15 @@ const options: { value: Lang; label: string }[] = [
 
 export function LangToggle({ className }: { className?: string }) {
   const { lang, setLang } = useLang()
+  const { ui } = useContent()
   const reduce = useReducedMotion()
   const pillId = useId()
 
   return (
     <div
-      role="radiogroup"
-      aria-label="Language"
-      className={cn('glass-soft flex items-center rounded-full p-0.5', className)}
+      role="group"
+      aria-label={ui.language}
+      className={cn('language-toggle glass-soft flex items-center rounded-full p-0.5', className)}
     >
       {options.map((option) => {
         const active = option.value === lang
@@ -26,8 +27,7 @@ export function LangToggle({ className }: { className?: string }) {
           <button
             key={option.value}
             type="button"
-            role="radio"
-            aria-checked={active}
+            aria-pressed={active}
             onClick={() => setLang(option.value)}
             className={cn(
               'relative rounded-full px-2.5 py-1 font-mono text-[11px] transition-colors',
