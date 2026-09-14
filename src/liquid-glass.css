@@ -13,7 +13,10 @@ html[data-preview] body { background: transparent; }
 html[data-preview] body::before,
 html[data-preview] body::after,
 html[data-preview]::before,
-html[data-preview]::after { display: none; }
+html[data-preview]::after {
+  display: none;
+  background: none;
+}
 html[data-preview][data-water='fallback'] body::before {
   display: block;
   background:
