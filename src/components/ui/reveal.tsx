@@ -15,9 +15,9 @@ export function Reveal({
   return (
     <motion.div
       className={className}
-      animate={reduce ? { opacity: 1, y: 0, filter: 'none' } : undefined}
-      initial={reduce ? false : { opacity: 0.6, y: 28, filter: 'blur(3px)' }}
-      whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)', transitionEnd: { filter: 'none' } }}
+      animate={reduce ? { opacity: 1, y: 0 } : undefined}
+      initial={reduce ? false : { opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.12, margin: '0px 0px -6% 0px' }}
       transition={{
         duration: reduce ? 0 : 0.8,

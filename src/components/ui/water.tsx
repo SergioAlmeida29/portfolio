@@ -259,6 +259,7 @@ export function Water({ className }: { className?: string }) {
     <canvas
       ref={ref}
       aria-hidden="true"
+      data-water-canvas="true"
       className={
         className ?? 'pointer-events-none fixed inset-0 -z-[3] h-full w-full'
       }

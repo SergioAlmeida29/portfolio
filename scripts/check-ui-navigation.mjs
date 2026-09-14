@@ -47,6 +47,15 @@ try {
       await page.reload()
       await aligned(page, 'work')
 
+      await page.evaluate(() => {
+        const contact = document.getElementById('contact')
+        if (!contact) throw new Error('contact section is missing')
+        window.scrollTo({ top: contact.offsetTop - window.innerHeight * 0.52, behavior: 'instant' })
+      })
+      await page.waitForFunction(() => document.querySelector('.nav-sections [aria-current]')?.getAttribute('href') === '#contact')
+      await page.evaluate(() => window.scrollBy(0, -1))
+      await page.waitForFunction(() => document.querySelector('.nav-sections [aria-current]')?.getAttribute('href') === '#contact')
+
       for (const route of ['missing-page', 'new', 'v1', 'v2', 'v3', 'pr/36/']) {
         await page.goto(`${base}/${route}`)
         await page.locator('main h1').waitFor()

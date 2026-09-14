@@ -21,7 +21,20 @@ const optics: Partial<GlassOptics> = {
   glow: 0.045,
   glowSpread: 0.08,
 }
-const navigationOptics = { ...optics, frost: 7 }
+const navigationOptics = {
+  ...optics,
+  strength: 0.06,
+  scaleX: 0.035,
+  scaleY: 0.08,
+  depth: 0.18,
+  curvature: 0.12,
+  dispersion: 0.16,
+  frost: 6,
+  specular: 0.52,
+  sheen: 0.36,
+  sheenWidth: 1.8,
+  glow: 0.025,
+}
 const materialStyle = { display: 'block', position: 'absolute', inset: 0, borderRadius: 'inherit' } as const
 
 type PanelProps = {

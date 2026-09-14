@@ -74,26 +74,29 @@ function HomeNav() {
     let frame = 0
     let geometryDirty = true
     let threshold = 0
-    let documentHeight = 0
+    let lastSectionThreshold = 0
     let positions: { href: string; top: number }[] = []
 
     function update() {
       frame = 0
       const scroll = window.scrollY
       if (geometryDirty) {
-        threshold = Math.min((header.current?.getBoundingClientRect().bottom ?? 0) + 60, window.innerHeight * 0.4)
+        const headerBottom = header.current?.getBoundingClientRect().bottom ?? 0
+        threshold = Math.min(headerBottom + 60, window.innerHeight * 0.4)
+        lastSectionThreshold = Math.max(
+          threshold,
+          Math.min(window.innerHeight * 0.62, window.innerHeight - headerBottom - 32),
+        )
         positions = sections.map(({ href, node }) => ({ href, top: node.getBoundingClientRect().top + scroll }))
-        documentHeight = document.documentElement.scrollHeight
         geometryDirty = false
       }
       let next: string | null = null
       for (const section of positions) {
         if (section.top <= scroll + threshold) next = section.href
       }
-      // Contact can be too short to reach the activation threshold.
-      if (scroll > 0 && scroll + window.innerHeight >= documentHeight - 2) {
-        const contact = sections.find((section) => section.href === '#contact')
-        if (contact) next = contact.href
+      const lastSection = positions.at(-1)
+      if (scroll > 0 && lastSection && lastSection.top <= scroll + lastSectionThreshold) {
+        next = lastSection.href
       }
       setActiveHref(next)
     }

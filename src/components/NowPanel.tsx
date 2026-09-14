@@ -17,7 +17,7 @@ export function NowPanel() {
   const collected = now.collectedAt && fullDate(now.collectedAt, lang)
 
   return (
-    <GlassPanel delay={0.42} className="now-card glass rounded-xl p-6 sm:p-7">
+    <GlassPanel delay={0.22} className="now-card glass rounded-xl p-6 sm:p-7">
       <div className="now-heading flex items-baseline justify-between gap-4">
         <h2 className="text-base font-medium tracking-tight">{t.title}</h2>
         <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">

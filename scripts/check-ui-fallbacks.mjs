@@ -25,6 +25,12 @@ for (const [name, engine, options] of [
           await page.locator('.hero h1').waitFor()
           await page.evaluate(() => document.fonts.ready)
           assert.equal(await page.locator('html').getAttribute('data-preview'), 'liquid-glass', label)
+          assert.equal(await page.locator('html').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(1, 5, 10)', `${label}: critical html background`)
+          assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(1, 5, 10)', `${label}: critical body background`)
+          assert.equal(await page.locator('.now-card').evaluate(el => {
+            const reveal = el.parentElement?.parentElement
+            return reveal ? getComputedStyle(reveal).filter : 'missing'
+          }), 'none', `${label}: weekly panel must not blur during reveal`)
           if (name === 'chromium-no-webgl') {
             assert.equal(await page.evaluate(() => document.createElement('canvas').getContext('webgl')), null, label)
             assert.equal(await page.locator('html').getAttribute('data-water'), 'fallback', label)
