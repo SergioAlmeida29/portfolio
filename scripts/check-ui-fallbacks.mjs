@@ -101,8 +101,8 @@ try {
       const displays = await page.evaluate(() => [document.documentElement, document.body].flatMap(el =>
         ['::before', '::after'].map(pseudo => getComputedStyle(el, pseudo).display),
       ))
-      assert.deepEqual(displays, ['none', 'none', 'block', 'none'], `${route}: early background: ${displays}`)
-      assert.notEqual(
+      assert.deepEqual(displays, ['none', 'none', 'none', 'none'], `${route}: early background: ${displays}`)
+      assert.equal(
         await page.locator('body').evaluate(el => getComputedStyle(el, '::before').backgroundImage),
         'none',
         `${route}: early static background`,

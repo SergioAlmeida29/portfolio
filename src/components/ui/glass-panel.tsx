@@ -23,17 +23,17 @@ const optics: Partial<GlassOptics> = {
 }
 const navigationOptics = {
   ...optics,
-  strength: 0.06,
-  scaleX: 0.035,
-  scaleY: 0.08,
-  depth: 0.18,
-  curvature: 0.12,
-  dispersion: 0.16,
-  frost: 6,
-  specular: 0.52,
-  sheen: 0.36,
-  sheenWidth: 1.8,
-  glow: 0.025,
+  strength: 0.09,
+  scaleX: 0.05,
+  scaleY: 0.09,
+  depth: 0.28,
+  curvature: 0.22,
+  dispersion: 0.62,
+  frost: 7,
+  specular: 0.9,
+  sheen: 0.72,
+  sheenWidth: 2.4,
+  glow: 0.04,
 }
 const materialStyle = { display: 'block', position: 'absolute', inset: 0, borderRadius: 'inherit' } as const
 
@@ -62,7 +62,6 @@ function GlassSurface({ children, className, navigation = false, defer = false }
 }) {
   const reducedMotion = useReducedMotion()
   const [opaque, setOpaque] = useState(() => matchMedia('(prefers-reduced-transparency: reduce)').matches)
-  const [navigationReady, setNavigationReady] = useState(false)
   const x = useSpring(0, { stiffness: 450, damping: 40 })
   const y = useSpring(0, { stiffness: 450, damping: 40 })
   const opacity = useMotionValue(0)
@@ -73,17 +72,6 @@ function GlassSurface({ children, className, navigation = false, defer = false }
     preference.addEventListener('change', sync)
     return () => preference.removeEventListener('change', sync)
   }, [])
-
-  useEffect(() => {
-    if (!navigation) return
-    const reveal = () => setNavigationReady(true)
-    if (typeof window.requestIdleCallback === 'function') {
-      const id = window.requestIdleCallback(reveal, { timeout: 500 })
-      return () => window.cancelIdleCallback(id)
-    }
-    const id = window.setTimeout(reveal, 0)
-    return () => window.clearTimeout(id)
-  }, [navigation])
 
   useEffect(() => {
     if (opaque || reducedMotion) opacity.set(0)
@@ -122,9 +110,7 @@ function GlassSurface({ children, className, navigation = false, defer = false }
       }}
     >
       {!opaque && (navigation
-        ? navigationReady
-          ? <Glass aria-hidden className="glass-material" style={materialStyle} optics={navigationOptics}><></></Glass>
-          : <div aria-hidden className="glass-material" />
+        ? <Glass aria-hidden className="glass-material" style={materialStyle} optics={navigationOptics}><></></Glass>
         : <EmptyBackdropGlass optics={optics} defer={defer} />)}
       <motion.span aria-hidden className="glass-pointer-rim" style={{ opacity }}>
         <motion.span className="glass-pointer-light" style={{ x, y }} />

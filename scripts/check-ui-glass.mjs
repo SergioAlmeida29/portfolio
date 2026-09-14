@@ -9,24 +9,10 @@ const browser = await chromium.launch({
 
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
-  await page.addInitScript(() => {
-    const callbacks = new Map()
-    let nextId = 0
-    window.requestIdleCallback = callback => {
-      callbacks.set(++nextId, callback)
-      return nextId
-    }
-    window.cancelIdleCallback = id => callbacks.delete(id)
-    window.releaseIdle = () => {
-      for (const callback of callbacks.values()) callback({ didTimeout: false, timeRemaining: () => 50 })
-      callbacks.clear()
-    }
-  })
   await page.goto(`${base}/`)
   const brand = page.locator('.nav-brand')
   await brand.focus()
   await page.evaluate(() => { window.originalBrand = document.querySelector('.nav-brand') })
-  await page.evaluate(() => window.releaseIdle())
   await page.waitForFunction(() => document.querySelectorAll('.nav-shell feDisplacementMap').length === 3)
   assert.ok(await page.evaluate(() => document.activeElement === window.originalBrand && window.originalBrand.isConnected),
     'deferred material must preserve the focused navigation node')
