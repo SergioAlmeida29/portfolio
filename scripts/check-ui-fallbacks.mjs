@@ -136,7 +136,11 @@ try {
       assert.equal((await page.goto(`${base}${route}`))?.status(), 200, `${route}: lifecycle response`)
       await page.locator('.hero h1').waitFor()
       await page.waitForFunction(() => document.documentElement.dataset.water === 'gl' && window.waterProbe.draws > 1)
-      assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el, '::before').display), 'none', `${route}: WebGL replaces static background`)
+      await page.waitForFunction(() => {
+        const canvas = document.querySelector('[data-water-canvas="true"]')
+        return canvas && getComputedStyle(canvas).opacity === '1'
+      })
+      assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el, '::before').display), 'block', `${route}: WebGL layers over static background`)
       const button = page.locator('#work button[aria-expanded]').first()
       await button.scrollIntoViewIfNeeded()
       await button.click()
