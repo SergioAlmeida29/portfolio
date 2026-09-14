@@ -7,17 +7,16 @@ html[data-preview] {
   scrollbar-color: var(--color-line-bright) var(--color-bg);
 }
 html[data-preview].lenis { scroll-behavior: auto; }
-/* Keep a painted backdrop under WebGL so the first frame never reveals a blank page. */
-html[data-preview] body::after,
-html[data-preview]::before,
-html[data-preview]::after { display: none; }
-html[data-preview][data-water='loading'] body::before,
-html[data-preview][data-water='fallback'] body::before {
+/* Keep an explicit painted backdrop under WebGL so the first frame never reveals a blank page. */
+html[data-preview] body::before {
   display: block;
   background:
     radial-gradient(90% 60% at 50% 0%, rgb(15 67 99 / 0.7), transparent 70%),
     linear-gradient(180deg, #061523 0%, #030b13 50%, #01050a 100%);
 }
+html[data-preview] body::after,
+html[data-preview]::before,
+html[data-preview]::after { display: none; }
 html[data-preview] :is(.hero, footer > div) {
   width: 100%;
   max-width: var(--page-width);

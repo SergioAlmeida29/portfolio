@@ -97,10 +97,16 @@ try {
       assert.equal((await page.goto(`${base}${route}`))?.status(), 200, `${route}: early response`)
       assert.equal(await page.locator('#root').evaluate(el => el.childElementCount), 0, 'app JS must not execute')
       assert.equal(await page.locator('html').getAttribute('data-preview'), 'liquid-glass', `${route}: early route marker`)
+      assert.equal(await page.locator('html').getAttribute('data-water'), 'loading', `${route}: early water state`)
       const displays = await page.evaluate(() => [document.documentElement, document.body].flatMap(el =>
         ['::before', '::after'].map(pseudo => getComputedStyle(el, pseudo).display),
       ))
-      assert.deepEqual(displays, ['none', 'none', 'none', 'none'], `${route}: early background: ${displays}`)
+      assert.deepEqual(displays, ['none', 'none', 'block', 'none'], `${route}: early background: ${displays}`)
+      assert.notEqual(
+        await page.locator('body').evaluate(el => getComputedStyle(el, '::before').backgroundImage),
+        'none',
+        `${route}: early static background`,
+      )
     } finally {
       await page.close()
     }
