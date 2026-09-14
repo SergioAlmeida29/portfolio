@@ -3,10 +3,12 @@ html[data-preview] {
   --page-width: 1360px;
   --page-gutter: clamp(20px, 3.2vw, 40px);
   --nav-offset: 120px;
+  background: var(--color-bg);
   scroll-padding-top: var(--nav-offset);
   scrollbar-color: var(--color-line-bright) var(--color-bg);
 }
 html[data-preview].lenis { scroll-behavior: auto; }
+html[data-preview] body { background: transparent; }
 /* Keep the first paint dark and reserve the decorative backdrop for WebGL fallback. */
 html[data-preview] body::before,
 html[data-preview] body::after,
@@ -306,12 +308,13 @@ html[data-preview] #skills .marquee { margin-inline: 0; }
 @media (max-width: 1023px) {
   html[data-preview] .hero { gap: 32px; }
   html[data-preview] .hero-copy { display: grid; gap: 24px; }
-  html[data-preview] .hero-now { max-width: 600px; width: 100%; }
+  html[data-preview] .hero-now { max-width: 600px; width: 100%; height: 360px; min-height: 360px; }
 }
 @media (max-width: 639px) {
   html[data-preview] { --nav-offset: 144px; }
   html[data-preview] .glass-nav { inset: 10px 10px auto; }
   html[data-preview] .nav-inner { padding-inline: 14px; }
+  html[data-preview] .hero-copy { min-height: clamp(360px, 100vw, 420px); }
   html[data-preview] .nav-tools { gap: 12px; }
   html[data-preview] .nav-section-link { font-size: 12px; }
   html[data-preview] .hero { padding-top: var(--nav-offset); padding-bottom: 32px; }

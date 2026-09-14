@@ -26,7 +26,7 @@ for (const [name, engine, options] of [
           await page.evaluate(() => document.fonts.ready)
           assert.equal(await page.locator('html').getAttribute('data-preview'), 'liquid-glass', label)
           assert.equal(await page.locator('html').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(1, 5, 10)', `${label}: critical html background`)
-          assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(1, 5, 10)', `${label}: critical body background`)
+          assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)', `${label}: transparent body composition`)
           assert.equal(await page.locator('.now-card').evaluate(el => {
             const reveal = el.parentElement?.parentElement
             return reveal ? getComputedStyle(reveal).filter : 'missing'
@@ -140,7 +140,13 @@ try {
         const canvas = document.querySelector('[data-water-canvas="true"]')
         return canvas && getComputedStyle(canvas).opacity === '1'
       })
-      assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el, '::before').display), 'block', `${route}: WebGL layers over static background`)
+      assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el, '::before').display), 'none', `${route}: WebGL uses the live canvas background`)
+      const visibleCanvas = await page.screenshot({ clip: { x: 0, y: 0, width: 390, height: 844 } })
+      await page.evaluate(() => { document.querySelector('[data-water-canvas="true"]').style.opacity = '0' })
+      await page.waitForTimeout(250)
+      const hiddenCanvas = await page.screenshot({ clip: { x: 0, y: 0, width: 390, height: 844 } })
+      assert.notDeepEqual(visibleCanvas, hiddenCanvas, `${route}: WebGL canvas must be visible in the page composition`)
+      await page.evaluate(() => { document.querySelector('[data-water-canvas="true"]').style.opacity = '' })
       const button = page.locator('#work button[aria-expanded]').first()
       await button.scrollIntoViewIfNeeded()
       await button.click()
