@@ -92,8 +92,17 @@ html[data-preview] .glass-nav {
   box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  /* sombra fora do clip-path da nav-shell */
-  filter: drop-shadow(0 18px 48px rgb(0 3 8 / 0.65));
+}
+/* sombra num ::before para não criar stacking context no glass-nav
+   (filter: drop-shadow criaria um stacking context que a lib capturaria
+   como input do feDisplacementMap, gerando artefactos nas bordas) */
+html[data-preview] .glass-nav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 26px;
+  box-shadow: 0 18px 48px -12px rgb(0 3 8 / 0.7);
+  pointer-events: none;
 }
 html[data-preview] .glass-nav::after { display: none; }
 html[data-preview] .language-toggle { padding: 0; }
@@ -116,7 +125,7 @@ html[data-preview] .liquid-panel.nav-shell {
   --glass-tint: rgb(5 17 28 / 0.48);
   border-radius: 26px;
   clip-path: inset(0 round 26px);
-  box-shadow: none; /* sombra está no glass-nav via drop-shadow */
+  box-shadow: none; /* sombra está no glass-nav::before */
 }
 html[data-preview] .glass-backdrop { filter: blur(0px); }
 html[data-preview] .glass-material {
