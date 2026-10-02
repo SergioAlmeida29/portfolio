@@ -112,8 +112,7 @@ html[data-preview] .liquid-panel {
 }
 html[data-preview] .liquid-panel.nav-shell {
   --glass-tint: rgb(5 17 28 / 0.48);
-  border-radius: 999px;
-  clip-path: inset(0 round 999px);
+  border-radius: 26px;
 }
 html[data-preview] .glass-backdrop { filter: blur(0px); }
 html[data-preview] .glass-material {
@@ -306,7 +305,7 @@ html[data-preview] #skills .marquee { margin-inline: 0; }
   html[data-preview] .nav-tools { grid-row: 1; grid-column: 2; }
   html[data-preview] .nav-sections { grid-row: 2; grid-column: 1 / -1; gap: 24px; }
   html[data-preview] .nav-section-link { min-height: 50px; }
-  html[data-preview] .liquid-panel.nav-shell { border-radius: 26px; }
+
 }
 @media (max-width: 1023px) {
   html[data-preview] .hero { gap: 32px; }
