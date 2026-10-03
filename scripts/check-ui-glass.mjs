@@ -84,34 +84,21 @@ try {
     width: Math.ceil(shellBox.width),
     height: Math.ceil(shellBox.height),
   }
+  // Captura com glass-material activo (tint + SVG filter + blur)
   const activeScreenshot = await page.screenshot({ clip })
-  // A Glass de navegação usa SVG filter (filter: url(#...)) para a refração, não backdropFilter.
-  // É necessário desligar tanto o backdropFilter (frost) como o filtro SVG interno
-  // que a lib injeta nos elementos filhos do glass-material.
-  await material.evaluate((element) => {
-    element.style.backdropFilter = 'none'
-    element.style.webkitBackdropFilter = 'none'
-    for (const el of element.querySelectorAll('*')) {
-      const f = el.style.filter
-      if (f && f.startsWith('url(')) {
-        el.dataset.savedFilter = f
-        el.style.filter = 'none'
-      }
-    }
-  })
-  await page.waitForTimeout(150)
+  // Esconder o glass-material por completo via opacity: 0.
+  // Desligar propriedades individuais (backdropFilter, filter) não é fiável porque:
+  // a) a lib pode aplicar o filtro SVG noutro elemento não encontrado por querySelectorAll
+  // b) o --glass-tint do CSS não é um inline style e não seria desligado
+  // Com opacity: 0 o material desaparece todo, expondo o backdrop de contraste por baixo,
+  // o que produz uma diferença de pixéis grande e estável mesmo em SwiftShader headless.
+  await material.evaluate((element) => { element.style.opacity = '0' })
+  await page.waitForTimeout(100)
   const inactiveScreenshot = await page.screenshot({ clip })
+  await material.evaluate((element) => { element.style.removeProperty('opacity') })
   const composition = await compareGlassScreenshots(page, activeScreenshot, inactiveScreenshot)
-  await material.evaluate((element) => {
-    element.style.removeProperty('backdrop-filter')
-    element.style.removeProperty('-webkit-backdrop-filter')
-    for (const el of element.querySelectorAll('[data-saved-filter]')) {
-      el.style.filter = el.dataset.savedFilter
-      delete el.dataset.savedFilter
-    }
-  })
-  assert.ok(composition.changedRatio > 0.04 && composition.meanDelta > 0.5,
-    `navigation material must change the composed backdrop (changed ${composition.changedRatio.toFixed(3)}, mean ${composition.meanDelta.toFixed(2)})`)
+  assert.ok(composition.changedRatio > 0.10 && composition.meanDelta > 2,
+    `navigation material must visibly cover the backdrop (changed ${composition.changedRatio.toFixed(3)}, mean ${composition.meanDelta.toFixed(2)})`)
   await page.evaluate(() => document.querySelector('[data-glass-composition-test]')?.remove())
 
   const disclosure = page.locator('#work button[aria-expanded]').first()
