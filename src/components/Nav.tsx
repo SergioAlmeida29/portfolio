@@ -2,12 +2,12 @@ import { motion, useReducedMotion, useScroll } from 'motion/react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useContent } from '../content'
 import { baseUrl, cvUrl } from '../lib/base'
-import { isLiquidGlass } from '../lib/preview'
+import { isHome } from '../lib/route'
 import { LangToggle } from './LangToggle'
-import { GlassPanel } from './ui/glass-panel'
+import { NavigationGlass } from './ui/glass-panel'
 
 export function Nav() {
-  return isLiquidGlass ? <PreviewNav /> : <DefaultNav />
+  return isHome ? <HomeNav /> : <DefaultNav />
 }
 
 function DefaultNav() {
@@ -58,7 +58,7 @@ function DefaultNav() {
   )
 }
 
-function PreviewNav() {
+function HomeNav() {
   const { nav, ui } = useContent()
   const header = useRef<HTMLElement>(null)
   const strip = useRef<HTMLElement>(null)
@@ -74,26 +74,29 @@ function PreviewNav() {
     let frame = 0
     let geometryDirty = true
     let threshold = 0
-    let documentHeight = 0
+    let lastSectionThreshold = 0
     let positions: { href: string; top: number }[] = []
 
     function update() {
       frame = 0
       const scroll = window.scrollY
       if (geometryDirty) {
-        threshold = Math.min((header.current?.getBoundingClientRect().bottom ?? 0) + 60, window.innerHeight * 0.4)
+        const headerBottom = header.current?.getBoundingClientRect().bottom ?? 0
+        threshold = Math.min(headerBottom + 60, window.innerHeight * 0.4)
+        lastSectionThreshold = Math.max(
+          threshold,
+          Math.min(window.innerHeight * 0.62, window.innerHeight - headerBottom - 32),
+        )
         positions = sections.map(({ href, node }) => ({ href, top: node.getBoundingClientRect().top + scroll }))
-        documentHeight = document.documentElement.scrollHeight
         geometryDirty = false
       }
       let next: string | null = null
       for (const section of positions) {
         if (section.top <= scroll + threshold) next = section.href
       }
-      // Contact can be too short to reach the activation threshold.
-      if (scroll > 0 && scroll + window.innerHeight >= documentHeight - 2) {
-        const contact = sections.find((section) => section.href === '#contact')
-        if (contact) next = contact.href
+      const lastSection = positions.at(-1)
+      if (scroll > 0 && lastSection && lastSection.top <= scroll + lastSectionThreshold) {
+        next = lastSection.href
       }
       setActiveHref(next)
     }
@@ -142,7 +145,7 @@ function PreviewNav() {
 
   return (
     <header ref={header} className="glass-nav fixed inset-x-0 top-0 z-40">
-      <GlassPanel className="nav-shell" surface="navigation">
+      <NavigationGlass className="nav-shell">
         <div className="nav-inner">
           <a href="#top" className="nav-brand">
             Sérgio Almeida
@@ -179,7 +182,7 @@ function PreviewNav() {
             <LangToggle />
           </div>
         </div>
-      </GlassPanel>
+      </NavigationGlass>
     </header>
   )
 }

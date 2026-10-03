@@ -3,15 +3,20 @@ html[data-preview] {
   --page-width: 1360px;
   --page-gutter: clamp(20px, 3.2vw, 40px);
   --nav-offset: 120px;
+  background: var(--color-bg);
   scroll-padding-top: var(--nav-offset);
   scrollbar-color: var(--color-line-bright) var(--color-bg);
 }
 html[data-preview].lenis { scroll-behavior: auto; }
-/* Keep the base color and water canvas, not the legacy CSS backdrop. */
+html[data-preview] body { background: transparent; }
+/* Keep the first paint dark and reserve the decorative backdrop for WebGL fallback. */
 html[data-preview] body::before,
 html[data-preview] body::after,
 html[data-preview]::before,
-html[data-preview]::after { display: none; }
+html[data-preview]::after {
+  display: none;
+  background: none;
+}
 html[data-preview][data-water='fallback'] body::before {
   display: block;
   background:
@@ -88,21 +93,47 @@ html[data-preview] .glass-nav {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
+/* sombra num ::before para não criar stacking context no glass-nav
+   (filter: drop-shadow criaria um stacking context que a lib capturaria
+   como input do feDisplacementMap, gerando artefactos nas bordas) */
+html[data-preview] .glass-nav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 26px;
+  box-shadow: 0 18px 48px -12px rgb(0 3 8 / 0.7);
+  pointer-events: none;
+}
 html[data-preview] .glass-nav::after { display: none; }
 html[data-preview] .language-toggle { padding: 0; }
 html[data-preview] .language-toggle button { min-width: 40px; min-height: 40px; }
 
 /* The library owns refraction, dispersion and the stationary edge lighting. */
 html[data-preview] .liquid-panel {
+  --glass-tint: rgb(12 32 50 / 0.16);
+  position: relative;
+  width: 100%;
   border-radius: 28px;
-  background: rgb(12 32 50 / 0.16);
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   box-shadow: 0 18px 48px -24px rgb(0 3 8 / 0.65);
-  overflow: visible;
+  overflow: hidden;
   min-width: 0;
 }
 html[data-preview] .liquid-panel.nav-shell {
-  border-radius: 999px;
-  background: rgb(5 17 28 / 0.48);
+  --glass-tint: rgb(5 17 28 / 0.48);
+  border-radius: 26px;
+  clip-path: inset(0 round 26px);
+  box-shadow: none; /* sombra está no glass-nav::before */
+}
+html[data-preview] .glass-backdrop { filter: blur(0px); }
+html[data-preview] .glass-material {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--glass-tint);
 }
 html[data-preview] .glass-content { position: relative; }
 html[data-preview] .glass::before,
@@ -142,6 +173,14 @@ html[data-preview] .glass-pointer-light {
   width: 480px;
   height: 480px;
   background: radial-gradient(240px circle at 240px 240px, rgb(255 255 255 / 0.95), transparent 72%);
+}
+html[data-preview] [data-water-canvas='true'] {
+  opacity: 0;
+  transition: opacity 220ms ease-out;
+}
+html[data-preview][data-water='gl'] [data-water-canvas='true'] { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  html[data-preview] [data-water-canvas='true'] { transition: none; }
 }
 html[data-preview] .liquid-panel[data-opaque] {
   background: #0a1c2e;
@@ -201,7 +240,7 @@ html[data-preview] .hero-lede {
   max-width: 36ch;
 }
 html[data-preview] .hero-actions { margin-top: 0; }
-html[data-preview] .now-card { padding: 28px; background: rgb(15 46 69 / 0.32); }
+html[data-preview] .now-card { --glass-tint: rgb(15 46 69 / 0.32); padding: 28px; }
 html[data-preview] .now-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
 html[data-preview] .now-heading h2 { font-size: 24px; }
 html[data-preview] .now-heading > span { font-size: 10px; letter-spacing: 0.12em; }
@@ -279,17 +318,18 @@ html[data-preview] #skills .marquee { margin-inline: 0; }
   html[data-preview] .nav-tools { grid-row: 1; grid-column: 2; }
   html[data-preview] .nav-sections { grid-row: 2; grid-column: 1 / -1; gap: 24px; }
   html[data-preview] .nav-section-link { min-height: 50px; }
-  html[data-preview] .liquid-panel.nav-shell { border-radius: 26px; }
+
 }
 @media (max-width: 1023px) {
   html[data-preview] .hero { gap: 32px; }
   html[data-preview] .hero-copy { display: grid; gap: 24px; }
-  html[data-preview] .hero-now { max-width: 600px; width: 100%; }
+  html[data-preview] .hero-now { max-width: 600px; width: 100%; height: 360px; min-height: 360px; }
 }
 @media (max-width: 639px) {
   html[data-preview] { --nav-offset: 144px; }
   html[data-preview] .glass-nav { inset: 10px 10px auto; }
   html[data-preview] .nav-inner { padding-inline: 14px; }
+  html[data-preview] .hero-copy { min-height: clamp(360px, 100vw, 420px); }
   html[data-preview] .nav-tools { gap: 12px; }
   html[data-preview] .nav-section-link { font-size: 12px; }
   html[data-preview] .hero { padding-top: var(--nav-offset); padding-bottom: 32px; }

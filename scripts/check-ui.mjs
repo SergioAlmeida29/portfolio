@@ -2,7 +2,6 @@ import assert from 'node:assert/strict'
 import { chromium } from 'playwright'
 
 const base = (process.env.BASE_URL ?? 'http://127.0.0.1:5173').replace(/\/+$/, '')
-const prBase = /^\/pr\/\d+\/?$/.test(new URL(base).pathname)
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_PATH || undefined,
   args: ['--enable-unsafe-swiftshader'],
@@ -30,16 +29,15 @@ try {
     assert.equal(await page.locator('.nav-sections [aria-current]').count(), 0)
     assert.ok(await page.locator('html').evaluate(el => el.classList.contains('lenis')))
     assert.equal(await page.locator('.nav-shell feDisplacementMap').count(), 3, 'navigation retains full RGB refraction')
-    const isolated = await page.locator('[data-empty-backdrop]').evaluateAll(panels => panels.map(panel => {
-      const root = panel.parentElement
+    const isolated = await page.locator('.glass-backdrop').evaluateAll(roots => roots.map(root => {
       const style = getComputedStyle(root)
-      return root.childElementCount === 1 && style.filter !== 'none' &&
+      return root.childElementCount === 1 && root.firstElementChild.matches('.liquid-panel') && style.filter !== 'none' &&
         style.backgroundColor === 'rgba(0, 0, 0, 0)' && style.backgroundImage === 'none'
     }))
     assert.equal(isolated.length, 4)
     assert.ok(isolated.every(Boolean), 'empty-backdrop optimization requires an unpainted, filtered parent')
     if (width === 1280) {
-      const mask = page.locator('#contact [data-empty-backdrop] > [data-lg-layer]').nth(1)
+      const mask = page.locator('#contact [data-liquid-glass="empty-backdrop"] > [data-lg-layer]').nth(1)
       assert.equal(await mask.evaluate(el => getComputedStyle(el).maskImage), 'none', 'offscreen contact mask must stay lazy')
     }
     await save(page, `root-${width}-hero`)
@@ -54,10 +52,10 @@ try {
       await page.waitForTimeout(950)
       if (id === 'contact') {
         await page.waitForFunction(() => {
-          const layer = document.querySelector('#contact [data-empty-backdrop] > [data-lg-layer]:nth-child(2)')
+          const layer = document.querySelector('#contact [data-liquid-glass="empty-backdrop"] > [data-lg-layer]:nth-child(2)')
           return layer && getComputedStyle(layer).display !== 'none' && getComputedStyle(layer).maskImage.includes('data:image/png')
         })
-        assert.ok(await page.locator('#contact [data-empty-backdrop] > [data-lg-layer]').nth(1).evaluate(async el => {
+        assert.ok(await page.locator('#contact [data-liquid-glass="empty-backdrop"] > [data-lg-layer]').nth(1).evaluate(async el => {
           const url = getComputedStyle(el).maskImage.match(/^url\(["']?(.*?)["']?\)$/)?.[1]
           if (!url) return false
           const image = new Image()
@@ -135,21 +133,13 @@ try {
     await page.close()
   }
 
-  if (!prBase) {
-    const previewPage = await browser.newPage({ viewport: { width: 390, height: 844 }, locale: 'en-US' })
-    assert.equal((await previewPage.goto(`${base}/pr/36/`))?.status(), 200, 'PR preview response')
-    await previewPage.locator('.hero h1').waitFor()
-    assert.equal(await previewPage.locator('html').getAttribute('data-preview'), 'liquid-glass', 'PR preview must render the final experience')
-    await previewPage.close()
-  }
-
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' })
   const client = await page.context().newCDPSession(page)
   assert.equal((await page.goto(`${base}/`))?.status(), 200, 'reduced motion response')
   await page.locator('.now-card').waitFor()
-  assert.equal(await page.locator('[data-empty-backdrop]').count(), 4)
-  assert.ok(await page.locator('[data-empty-backdrop]').evaluateAll(panels =>
-    panels.every(panel => getComputedStyle(panel.parentElement).filter === 'blur(0px)'),
+  assert.equal(await page.locator('.glass-backdrop').count(), 4)
+  assert.ok(await page.locator('.glass-backdrop').evaluateAll(roots =>
+    roots.every(root => getComputedStyle(root).filter === 'blur(0px)'),
   ), 'motion-only reduction must preserve every empty backdrop root, including offscreen panels')
   assert.equal(await page.locator('[data-opaque]').count(), 0, 'motion reduction must not disable transparency')
   await client.send('Emulation.setEmulatedMedia', { features: [
@@ -160,22 +150,13 @@ try {
   await page.locator('.now-card[data-opaque]').waitFor()
   assert.equal(await page.locator('html').evaluate(el => el.classList.contains('lenis')), false)
   assert.equal(await page.locator('.now-card').evaluate(el => getComputedStyle(el).backdropFilter), 'none')
-  assert.ok(await page.locator('[data-empty-backdrop]').evaluateAll(panels =>
-    panels.every(panel => getComputedStyle(panel).backdropFilter === 'none'),
-  ), 'reduced transparency must disable all backdrop processing on isolated panels')
+  assert.equal(await page.locator('.glass-material').count(), 0, 'reduced transparency must remove decorative materials')
   const button = page.locator('#work button[aria-expanded]').first()
   await button.click()
   await client.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }, { name: 'prefers-reduced-transparency', value: 'no-preference' }] })
   await page.waitForTimeout(500)
   assert.equal(await button.getAttribute('aria-expanded'), 'true', 'preference change must not remount content')
   assert.ok(await page.locator('html').evaluate(el => el.classList.contains('lenis')))
-  if (!prBase) {
-    for (const route of ['/v1', '/v2', '/v3']) {
-      assert.equal((await page.goto(`${base}${route}`))?.status(), 200, `${route} response`)
-      await page.locator('main h1').waitFor()
-      assert.equal(await page.locator('.hero').count(), 0, `${route} must be removed`)
-    }
-  }
   assert.equal((await page.goto(`${base}/`))?.status(), 200, 'final root response')
   await page.locator('.hero h1').waitFor()
   assert.equal(await page.locator('html').getAttribute('data-preview'), 'liquid-glass')
@@ -203,4 +184,5 @@ try {
 }
 
 await import('./check-ui-navigation.mjs')
+await import('./check-ui-glass.mjs')
 await import('./check-ui-fallbacks.mjs')

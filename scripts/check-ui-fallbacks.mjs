@@ -25,18 +25,24 @@ for (const [name, engine, options] of [
           await page.locator('.hero h1').waitFor()
           await page.evaluate(() => document.fonts.ready)
           assert.equal(await page.locator('html').getAttribute('data-preview'), 'liquid-glass', label)
+          assert.equal(await page.locator('html').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(1, 5, 10)', `${label}: critical html background`)
+          assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)', `${label}: transparent body composition`)
+          assert.equal(await page.locator('.now-card').evaluate(el => {
+            const reveal = el.parentElement?.parentElement
+            return reveal ? getComputedStyle(reveal).filter : 'missing'
+          }), 'none', `${label}: weekly panel must not blur during reveal`)
           if (name === 'chromium-no-webgl') {
             assert.equal(await page.evaluate(() => document.createElement('canvas').getContext('webgl')), null, label)
             assert.equal(await page.locator('html').getAttribute('data-water'), 'fallback', label)
             assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el, '::before').display), 'block', `${label}: static background fallback`)
           }
-          assert.equal(await page.locator('[data-empty-backdrop]').count(), 4, `${label}: fallback cards`)
-          assert.ok(await page.locator('[data-empty-backdrop]').evaluateAll(panels => panels.every(panel => {
+          assert.equal(await page.locator('[data-liquid-glass="empty-backdrop"]').count(), 4, `${label}: fallback cards`)
+          assert.ok(await page.locator('[data-liquid-glass="empty-backdrop"]').evaluateAll(panels => panels.every(panel => {
             const style = getComputedStyle(panel)
             return (style.backdropFilter || style.webkitBackdropFilter || 'none') !== 'none'
           })), `${label}: native frost remains available`)
           if (name !== 'chromium-no-webgl') {
-            assert.ok(await page.locator('[data-empty-backdrop] > [data-lg-layer]:nth-child(2)').evaluateAll(layers =>
+            assert.ok(await page.locator('[data-liquid-glass="empty-backdrop"] > [data-lg-layer]:nth-child(2)').evaluateAll(layers =>
               layers.length === 4 && layers.every(layer => getComputedStyle(layer).display === 'none'),
             ), `${label}: unsupported refraction uses native fallback`)
           }
@@ -91,10 +97,16 @@ try {
       assert.equal((await page.goto(`${base}${route}`))?.status(), 200, `${route}: early response`)
       assert.equal(await page.locator('#root').evaluate(el => el.childElementCount), 0, 'app JS must not execute')
       assert.equal(await page.locator('html').getAttribute('data-preview'), 'liquid-glass', `${route}: early route marker`)
+      assert.equal(await page.locator('html').getAttribute('data-water'), 'loading', `${route}: early water state`)
       const displays = await page.evaluate(() => [document.documentElement, document.body].flatMap(el =>
         ['::before', '::after'].map(pseudo => getComputedStyle(el, pseudo).display),
       ))
       assert.deepEqual(displays, ['none', 'none', 'none', 'none'], `${route}: early background: ${displays}`)
+      assert.equal(
+        await page.locator('body').evaluate(el => getComputedStyle(el, '::before').backgroundImage),
+        'none',
+        `${route}: early static background`,
+      )
     } finally {
       await page.close()
     }
@@ -124,7 +136,17 @@ try {
       assert.equal((await page.goto(`${base}${route}`))?.status(), 200, `${route}: lifecycle response`)
       await page.locator('.hero h1').waitFor()
       await page.waitForFunction(() => document.documentElement.dataset.water === 'gl' && window.waterProbe.draws > 1)
-      assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el, '::before').display), 'none', `${route}: WebGL replaces static background`)
+      await page.waitForFunction(() => {
+        const canvas = document.querySelector('[data-water-canvas="true"]')
+        return canvas && getComputedStyle(canvas).opacity === '1'
+      })
+      assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el, '::before').display), 'none', `${route}: WebGL uses the live canvas background`)
+      const visibleCanvas = await page.screenshot({ clip: { x: 0, y: 0, width: 390, height: 844 } })
+      await page.evaluate(() => { document.querySelector('[data-water-canvas="true"]').style.opacity = '0' })
+      await page.waitForTimeout(250)
+      const hiddenCanvas = await page.screenshot({ clip: { x: 0, y: 0, width: 390, height: 844 } })
+      assert.notDeepEqual(visibleCanvas, hiddenCanvas, `${route}: WebGL canvas must be visible in the page composition`)
+      await page.evaluate(() => { document.querySelector('[data-water-canvas="true"]').style.opacity = '' })
       const button = page.locator('#work button[aria-expanded]').first()
       await button.scrollIntoViewIfNeeded()
       await button.click()

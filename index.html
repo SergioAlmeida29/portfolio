@@ -2,8 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <style>html, body { background: #01050a; color: #eaf2f9; } html { color-scheme: dark; }</style>
     <script>
-      if (location.pathname === '/' || location.pathname === '/index.html' || /^\/pr\/\d+(?:\/(?:index\.html)?)?$/.test(location.pathname)) {
+      const base = '%BASE_URL%'
+      const home = location.pathname === base || location.pathname === `${base}index.html`
+      document.documentElement.dataset.route = home ? 'home' : 'not-found'
+      if (home) {
         document.documentElement.dataset.preview = 'liquid-glass'
         document.documentElement.dataset.water = 'loading'
         if (matchMedia('(prefers-reduced-transparency: reduce)').matches) {
