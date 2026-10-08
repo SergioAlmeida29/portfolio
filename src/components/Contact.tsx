@@ -6,7 +6,6 @@ import {
 } from '@tabler/icons-react'
 import { useContent } from '../content'
 import { cvUrl } from '../lib/base'
-import { Reveal } from './ui/reveal'
 import { WordReveal } from './ui/word-reveal'
 import { GlassPanel } from './ui/glass-panel'
 
@@ -33,53 +32,51 @@ export function Contact() {
           <WordReveal text={contact.heading} inView stagger={0.07} />
         </h2>
 
-        <Reveal delay={0.1}>
-          <GlassPanel emptyBackdrop defer className="glass mt-12 rounded-xl p-8 md:p-12">
-            <a
-              href={`mailto:${contact.email}`}
-              className="group inline-flex items-center gap-3 text-xl tracking-tight text-fg transition-colors hover:text-accent sm:text-3xl"
-            >
-              <IconMail
-                size={26}
-                stroke={1.5}
-                className="shrink-0 text-muted transition-colors group-hover:text-accent"
-              />
-              <span className="contact-email">{contact.email}</span>
-            </a>
+        <GlassPanel delay={0.1} defer className="glass mt-12 rounded-xl p-8 md:p-12">
+          <a
+            href={`mailto:${contact.email}`}
+            className="group inline-flex items-center gap-3 text-xl tracking-tight text-fg transition-colors hover:text-accent sm:text-3xl"
+          >
+            <IconMail
+              size={26}
+              stroke={1.5}
+              className="shrink-0 text-muted transition-colors group-hover:text-accent"
+            />
+            <span className="contact-email">{contact.email}</span>
+          </a>
 
-            <div className="mt-10 flex flex-wrap items-center gap-3">
-              {socials.map(({ href, label, Icon }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="glass-soft inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-fg/85 transition-colors hover:border-white/25 hover:text-fg"
-                >
-                  <Icon size={17} stroke={1.75} />
-                  {label}
-                </a>
-              ))}
+          <div className="mt-10 flex flex-wrap items-center gap-3">
+            {socials.map(({ href, label, Icon }) => (
               <a
-                href={cvUrl}
+                key={label}
+                href={href}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-sm text-accent transition-colors hover:bg-accent/15"
+                className="glass-soft inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-fg/85 transition-colors hover:border-white/25 hover:text-fg"
               >
-                <IconDownload size={17} stroke={1.75} />
-                {contact.cv}
+                <Icon size={17} stroke={1.75} />
+                {label}
               </a>
-            </div>
+            ))}
+            <a
+              href={cvUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-sm text-accent transition-colors hover:bg-accent/15"
+            >
+              <IconDownload size={17} stroke={1.75} />
+              {contact.cv}
+            </a>
+          </div>
 
-            <p className="mt-10 flex items-center gap-2.5 border-t border-white/[0.07] pt-7 text-sm text-muted">
-              <span
-                className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
-                aria-hidden
-              />
-              {contact.location}
-            </p>
-          </GlassPanel>
-        </Reveal>
+          <p className="mt-10 flex items-center gap-2.5 border-t border-white/[0.07] pt-7 text-sm text-muted">
+            <span
+              className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
+              aria-hidden
+            />
+            {contact.location}
+          </p>
+        </GlassPanel>
       </div>
     </section>
   )

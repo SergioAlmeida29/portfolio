@@ -1,8 +1,9 @@
 import { Glass, type GlassOptics } from '@samasante/liquid-glass'
 import { animate, motion, useMotionValue, useReducedMotion, useSpring } from 'motion/react'
-import { useEffect, useState, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type PointerEvent, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { EmptyBackdropGlass } from './empty-backdrop-glass'
+import { Reveal } from './reveal'
 
 const optics: Partial<GlassOptics> = {
   strength: 0.24,
@@ -20,32 +21,58 @@ const optics: Partial<GlassOptics> = {
   glow: 0.045,
   glowSpread: 0.08,
 }
-const navigationOptics = { ...optics, frost: 7 }
-// A sole child of a transparent filtered Reveal has no backdrop pixels to bend.
-// Keep its identical specular map, tint and edge light; skip sampling empty RGB.
-const emptyBackdropOptics = { ...optics, strength: 0, dispersion: 0 }
-const opaqueOptics = { ...optics, strength: 0, dispersion: 0, frost: 0, saturate: 1, brightness: 0, specular: 0, sheen: 0, glow: 0 }
-const panelStyle = { display: 'block', position: 'relative', width: '100%' } as const
-const opaqueStyle = { ...panelStyle, background: '#0a1c2e', backdropFilter: 'none', WebkitBackdropFilter: 'none' } as const
+const navigationOptics = {
+  ...optics,
+  strength: 0.03,
+  scaleX: 0.06,
+  scaleY: 0.015,
+  depth: 0.65,
+  curvature: 0.45,
+  dispersion: 1,
+  frost: 1.2,
+  specular: 0.9,
+  sheen: 0.72,
+  sheenWidth: 2.4,
+  glow: 0.04,
+}
+const materialStyle = { display: 'block', position: 'absolute', inset: 0, borderRadius: 'inherit' } as const
+const navigationMapSize = () => Math.min(1536, Math.max(512, Math.ceil(window.innerWidth / 256) * 256))
 
-export function GlassPanel({
-  children,
-  className,
-  surface = 'panel',
-  emptyBackdrop = false,
-  defer = false,
-}: {
+type PanelProps = {
   children: ReactNode
   className?: string
-  surface?: 'panel' | 'navigation'
-  /** Only valid as the sole child of a transparent, filtered backdrop root. */
-  emptyBackdrop?: boolean
-  /** Delay a below-fold specular-map generation until the panel approaches view. */
+}
+
+export function GlassPanel({ delay = 0, ...props }: PanelProps & { delay?: number; defer?: boolean }) {
+  return (
+    <Reveal delay={delay}>
+      <div className="glass-backdrop">
+        <GlassSurface {...props} />
+      </div>
+    </Reveal>
+  )
+}
+
+export function NavigationGlass(props: PanelProps) {
+  const [mapSize, setMapSize] = useState(navigationMapSize)
+  const navOptics = useMemo(() => ({ ...navigationOptics, mapSize }), [mapSize])
+
+  useEffect(() => {
+    const resize = () => setMapSize(navigationMapSize())
+    window.addEventListener('resize', resize)
+    return () => window.removeEventListener('resize', resize)
+  }, [])
+
+  return <GlassSurface {...props} navOptics={navOptics} />
+}
+
+function GlassSurface({ children, className, navOptics, defer = false }: PanelProps & {
+  navOptics?: Partial<GlassOptics>
   defer?: boolean
 }) {
+  const navigation = Boolean(navOptics)
   const reducedMotion = useReducedMotion()
   const [opaque, setOpaque] = useState(() => matchMedia('(prefers-reduced-transparency: reduce)').matches)
-  const [navigationReady, setNavigationReady] = useState(surface !== 'navigation')
   const x = useSpring(0, { stiffness: 450, damping: 40 })
   const y = useSpring(0, { stiffness: 450, damping: 40 })
   const opacity = useMotionValue(0)
@@ -56,28 +83,6 @@ export function GlassPanel({
     preference.addEventListener('change', sync)
     return () => preference.removeEventListener('change', sync)
   }, [])
-
-  useEffect(() => {
-    if (surface !== 'navigation' || navigationReady) return
-    let disposed = false
-    const reveal = () => {
-      if (!disposed) setNavigationReady(true)
-    }
-    const requestIdle = (window as Window & { requestIdleCallback?: typeof window.requestIdleCallback }).requestIdleCallback
-    if (requestIdle) {
-      const id = requestIdle.call(window, reveal, { timeout: 500 })
-      const cancelIdle = (window as Window & { cancelIdleCallback?: (handle: number) => void }).cancelIdleCallback
-      return () => {
-        disposed = true
-        cancelIdle?.call(window, id)
-      }
-    }
-    const id = globalThis.setTimeout(reveal, 0)
-    return () => {
-      disposed = true
-      globalThis.clearTimeout(id)
-    }
-  }, [navigationReady, surface])
 
   useEffect(() => {
     if (opaque || reducedMotion) opacity.set(0)
@@ -98,23 +103,11 @@ export function GlassPanel({
     }
   }
 
-  if (surface === 'navigation' && !navigationReady) {
-    return <div className={cn('liquid-panel', className)} data-surface={surface} data-opaque={opaque || undefined} style={opaque ? opaqueStyle : panelStyle}>{children}</div>
-  }
-  if (opaque && !emptyBackdrop) {
-    return <div className={cn('liquid-panel', className)} data-surface={surface} data-opaque style={opaqueStyle}><div className="glass-content">{children}</div></div>
-  }
-  const Material = emptyBackdrop && surface === 'panel' ? EmptyBackdropGlass : Glass
-
   return (
-    <Material
+    <div
       className={cn('liquid-panel', className)}
-      data-surface={surface}
-      data-empty-backdrop={emptyBackdrop || undefined}
+      data-surface={navigation ? 'navigation' : 'panel'}
       data-opaque={opaque || undefined}
-      style={panelStyle}
-      optics={opaque ? opaqueOptics : surface === 'navigation' ? navigationOptics : emptyBackdrop ? emptyBackdropOptics : optics}
-      {...(emptyBackdrop ? { defer } : {})}
       onPointerEnter={(event) => {
         track(event)
         if (event.pointerType === 'mouse' && !reducedMotion && !opaque) {
@@ -127,10 +120,13 @@ export function GlassPanel({
         animate(opacity, 0, { duration: 0.3 })
       }}
     >
+      {!opaque && (navOptics
+        ? <Glass aria-hidden className="glass-material" style={materialStyle} optics={navOptics}><></></Glass>
+        : <EmptyBackdropGlass optics={optics} defer={defer} />)}
       <motion.span aria-hidden className="glass-pointer-rim" style={{ opacity }}>
         <motion.span className="glass-pointer-light" style={{ x, y }} />
       </motion.span>
       <div className="glass-content">{children}</div>
-    </Material>
+    </div>
   )
 }
