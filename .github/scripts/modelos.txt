@@ -1,0 +1,8 @@
+# Cascata de modelos gratuitos do OpenRouter, por ordem de preferência.
+# Fonte de verdade única: os workflows de IA lêem esta lista, não a repetem.
+openrouter/poolside/laguna-s-2.1:free
+openrouter/z-ai/glm-5.2:free
+openrouter/cohere/north-mini-code:free
+openrouter/thinkingmachines/inkling:free
+openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+openrouter/minimax/minimax-m3:free

@@ -1,0 +1,107 @@
+import { IconPlus } from '@tabler/icons-react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import type { ReactNode } from 'react'
+import { useId, useState } from 'react'
+import { useContent } from '../../content'
+import { cn } from '../../lib/cn'
+
+export function Expandable({
+  head,
+  children,
+  className,
+  contentClassName,
+  label,
+}: {
+  head: ReactNode
+  children: ReactNode
+  className?: string
+  contentClassName?: string
+  label: string
+}) {
+  const { ui } = useContent()
+  const [open, setOpen] = useState(false)
+  const reduce = useReducedMotion()
+  const panelId = useId()
+
+  return (
+    <div className={cn('disclosure', className)}>
+      <div className="disclosure-heading relative">
+        <div className="disclosure-head">{head}</div>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-controls={panelId}
+          aria-label={`${open ? ui.close : ui.open} ${label}`}
+          className="disclosure-toggle group/exp absolute right-0 top-0 grid size-11 place-items-center rounded-full text-muted transition-colors hover:bg-white/10 hover:text-fg"
+        >
+          <span aria-hidden className="glass-soft grid size-8 place-items-center rounded-full">
+            <motion.span
+              className="grid place-items-center"
+              animate={{ rotate: open ? 45 : 0 }}
+              transition={{ duration: reduce ? 0 : 0.35, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <IconPlus size={15} stroke={2} />
+            </motion.span>
+          </span>
+        </button>
+      </div>
+
+      <ExpandableContent open={open} panelId={panelId} reduce={reduce} contentClassName={contentClassName}>
+        {children}
+      </ExpandableContent>
+    </div>
+  )
+}
+
+function ExpandableContent({
+  open, panelId, reduce, contentClassName, children,
+}: {
+  open: boolean
+  panelId: string
+  reduce: boolean | null
+  contentClassName?: string
+  children: ReactNode
+}) {
+  return (
+    <AnimatePresence initial={false}>
+      {open && (
+        <motion.div
+          id={panelId}
+          key="panel"
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{
+            duration: reduce ? 0 : 0.42,
+            ease: [0.16, 1, 0.3, 1],
+            opacity: { duration: reduce ? 0 : 0.28 },
+          }}
+          className="overflow-hidden"
+        >
+          <div className={cn('pt-6', contentClassName)}>{children}</div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+export function DetailList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div>
+      <p className="font-mono text-[11px] text-muted/70">
+        {title}
+      </p>
+      <ul className="mt-3 space-y-2">
+        {items.map((item) => (
+          <li
+            key={item}
+            className="border-l border-line pl-4 text-sm leading-relaxed text-muted"
+          >
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}

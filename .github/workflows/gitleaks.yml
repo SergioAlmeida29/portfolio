@@ -1,0 +1,35 @@
+name: gitleaks
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+concurrency:
+  group: gitleaks-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # a action oficial exige licença para organizações; o binário não
+  GITLEAKS_VERSAO: 8.30.1
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: instalar gitleaks
+        run: |
+          curl -fsSL --retry 3 \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSAO}/gitleaks_${GITLEAKS_VERSAO}_linux_x64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      - name: varrer a árvore de trabalho
+        run: gitleaks dir . --redact --no-banner
+
+      - name: varrer o histórico
+        run: gitleaks git . --redact --no-banner

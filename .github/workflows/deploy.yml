@@ -3,15 +3,216 @@ name: deploy
 on:
   push:
     branches: [main, dev]
+  pull_request:
 
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    runs-on: [self-hosted, linux]
+  quality:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
-      - name: publicar
-        run: bash infra/deploy.sh ${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: instalar deps
+        run: npm ci
+
+      - name: recolher conteúdo
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/now.mjs
+
+      - name: typecheck
+        run: npm run typecheck
+
+      - name: lint
+        run: npm run lint
+
+      - name: guardar conteúdo validado
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-content
+          path: src/content/now.generated.ts
+          if-no-files-found: error
+          retention-days: 1
+
+  build:
+    needs: quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: instalar deps
+        run: npm ci
+
+      - name: obter conteúdo validado
+        uses: actions/download-artifact@v5
+        with:
+          name: site-content
+          path: src/content/
+
+      - name: instalar browsers de teste
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: build
+        id: build
+        run: |
+          BASE="/"
+          MODE="production"
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            PR="${{ github.event.number }}"
+            [[ "$PR" =~ ^[0-9]+$ ]] || { echo "numero de PR invalido: $PR" >&2; exit 1; }
+            BASE="/pr/${PR}/"
+            MODE="staging"
+          elif [ "$GITHUB_REF" = "refs/heads/dev" ]; then
+            MODE="staging"
+          fi
+          npx vite build --mode "$MODE" --base "$BASE"
+          if [ "$MODE" = "staging" ]; then node scripts/robots.mjs; fi
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+
+      - name: testar artifact do deploy
+        timeout-minutes: 10
+        env:
+          SCREENSHOT_DIR: test-results/deploy
+        run: node scripts/test-preview.mjs "${{ steps.build.outputs.base }}"
+
+      - name: testar raiz e base alternativa
+        if: github.event_name == 'pull_request'
+        timeout-minutes: 10
+        env:
+          SCREENSHOT_DIR: test-results/root
+        run: |
+          npx vite build --mode staging --base / --outDir "$RUNNER_TEMP/portfolio-root"
+          node scripts/test-preview.mjs / "$RUNNER_TEMP/portfolio-root"
+          npx vite build --mode staging --base /portfolio/ --outDir "$RUNNER_TEMP/portfolio-base"
+          node scripts/test-preview.mjs /portfolio/ "$RUNNER_TEMP/portfolio-base" scripts/check-ui-navigation.mjs
+
+      - name: guardar resultados UI
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: guardar artifact do deploy
+        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
+
+  publicar:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: [self-hosted, linux]
+    permissions:
+      contents: read
+    env:
+      AMBIENTE: ${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: obter artifact do deploy
+        uses: actions/download-artifact@v5
+        with:
+          name: deploy-dist
+          path: dist/
+
+      # mantém este job vermelho se a release nova ou o rollback falharem
+      - name: deploy e smoke com rollback
+        if: github.event_name == 'push'
+        id: smoke
+        run: bash infra/deploy-and-verify.sh "$AMBIENTE"
+
+  preview:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: build
+    runs-on: [self-hosted, linux]
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: obter artifact do deploy
+        uses: actions/download-artifact@v5
+        with:
+          name: deploy-dist
+          path: dist/
+
+      - name: deploy preview
+        run: |
+          PR="${{ github.event.number }}"
+          [[ "$PR" =~ ^[0-9]+$ ]] || { echo "numero de PR invalido: $PR" >&2; exit 1; }
+          bash infra/deploy-preview.sh "$PR"
+
+      - name: testar resposta do nginx na preview
+        run: |
+          PR="${{ github.event.number }}"
+          [[ "$PR" =~ ^[0-9]+$ ]] || { echo "numero de PR invalido: $PR" >&2; exit 1; }
+          HOST="staging.sergioalmeida.dev"
+
+          # 1. Aguardar que o nginx responda 200 na preview (com retry pós-reload)
+          for i in $(seq 1 5); do
+            RESP=$(curl -s -i "http://127.0.0.1/pr/${PR}/" -H "Host: $HOST" || true)
+            if echo "$RESP" | grep -q "200 OK"; then
+              break
+            fi
+            sleep 1
+          done
+
+          echo "$RESP" | grep -q "200 OK"
+          echo "$RESP" | grep -iq "x-robots-tag: noindex, nofollow"
+          echo "$RESP" | grep -q 'id="root"'
+
+          # 2. Redirect de URL sem barra para com barra
+          curl -s -i "http://127.0.0.1/pr/${PR}" -H "Host: $HOST" | grep -q "301"
+
+          # 3. Bundle JS e CSS respondem 200
+          CSS_FILE=$(ls "/var/www/staging.sergioalmeida.dev/pr/${PR}/assets/"*.css | head -1 | xargs -n1 basename)
+          JS_FILE=$(ls "/var/www/staging.sergioalmeida.dev/pr/${PR}/assets/"*.js | head -1 | xargs -n1 basename)
+
+          curl -s -i "http://127.0.0.1/pr/${PR}/assets/${CSS_FILE}" -H "Host: $HOST" | grep -q "200 OK"
+          curl -s -i "http://127.0.0.1/pr/${PR}/assets/${CSS_FILE}/" -H "Host: $HOST" | grep -q "200 OK"
+          curl -s -i "http://127.0.0.1/pr/${PR}/assets/${JS_FILE}" -H "Host: $HOST" | grep -q "200 OK"
+
+      - name: comentar URL da preview no PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          [[ "$PR" =~ ^[0-9]+$ ]] || { echo "numero de PR invalido: $PR" >&2; exit 1; }
+          URL="https://staging.sergioalmeida.dev/pr/${PR}/"
+          BODY="**Preview:** [${URL}](${URL})"
+          API="https://api.github.com/repos/${REPO}"
+          AUTH="Authorization: Bearer ${GH_TOKEN}"
+          COMMENT_ID=$(curl -fsSL -H "$AUTH" "${API}/issues/${PR}/comments?per_page=100" \
+            | python3 -c "import json,sys; cs=json.load(sys.stdin); found=[c['id'] for c in cs if c['body'].startswith('**Preview:**')]; print(found[-1] if found else '')")
+          if [ -n "$COMMENT_ID" ]; then
+            curl -fsSL -X PATCH -H "$AUTH" -H "Content-Type: application/json" \
+              -d "{\"body\":\"${BODY}\"}" "${API}/issues/comments/${COMMENT_ID}" > /dev/null
+          else
+            curl -fsSL -X POST -H "$AUTH" -H "Content-Type: application/json" \
+              -d "{\"body\":\"${BODY}\"}" "${API}/issues/${PR}/comments" > /dev/null
+          fi

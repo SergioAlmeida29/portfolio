@@ -1,0 +1,24 @@
+name: preview-cleanup
+
+on:
+  pull_request:
+    types: [closed]
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, linux]
+    steps:
+      - name: apagar preview
+        run: |
+          PR="${{ github.event.pull_request.number }}"
+          [[ "$PR" =~ ^[0-9]+$ ]] || { echo "PR invalido: $PR" >&2; exit 1; }
+          DIR="/var/www/staging.sergioalmeida.dev/pr/$PR"
+          if [ -d "$DIR" ]; then
+            rm -rf "$DIR"
+            echo "-> preview /pr/$PR/ apagado"
+          fi

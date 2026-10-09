@@ -1,0 +1,268 @@
+import { useEffect, useRef } from 'react'
+
+const VERT = 'attribute vec2 a; void main(){ gl_Position = vec4(a, 0.0, 1.0); }'
+
+const FRAG = `
+precision highp float;
+
+uniform vec2 u_res;
+uniform float u_time;
+uniform vec2 u_mouse;
+uniform float u_hover;
+
+void main(){
+  vec2 uv = gl_FragCoord.xy / u_res;
+  float ar = u_res.x / u_res.y;
+  vec2 st = vec2(uv.x * ar, uv.y);
+
+  vec2 d = (uv - vec2(0.5, 0.86)) / vec2(1.35, 1.0);
+  float mask = 1.0 - smoothstep(0.20, 0.80, length(d));
+  if (mask == 0.0) {
+    gl_FragColor = vec4(0.0);
+    return;
+  }
+
+  float perto = exp(-distance(st, vec2(u_mouse.x * ar, u_mouse.y)) * 3.4) * u_hover;
+
+  vec2 p = mod(st * 5.5, 6.2831853) - 250.0;
+  vec2 i = p;
+  float c = 1.0;
+  float inten = 0.0046 + perto * 0.0008;
+
+  for (int n = 0; n < 5; n++){
+    float t = u_time * 0.115 * (1.0 - (3.5 / float(n + 1)));
+    i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
+    c += 1.0 / length(vec2(p.x / (sin(i.x + t) / inten), p.y / (cos(i.y + t) / inten)));
+  }
+
+  c /= 5.0;
+  c = 1.17 - pow(c, 1.35);
+  float luz = pow(abs(c), 7.0);
+
+  float a = clamp(luz * mask * (0.42 + perto * 0.3), 0.0, 0.5);
+  vec3 tint = mix(vec3(0.247, 0.663, 0.878), vec3(0.686, 0.886, 1.0), luz);
+
+  gl_FragColor = vec4(tint * a, a);
+}
+`
+
+function compile(gl: WebGLRenderingContext, type: number, src: string) {
+  const shader = gl.createShader(type)
+  if (!shader) return null
+
+  gl.shaderSource(shader, src)
+  gl.compileShader(shader)
+
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    console.error(gl.getShaderInfoLog(shader))
+    gl.deleteShader(shader)
+    return null
+  }
+
+  return shader
+}
+
+export function Water({ className }: { className?: string }) {
+  const ref = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const context = el.getContext('webgl', {
+      antialias: false,
+      depth: false,
+      stencil: false,
+      powerPreference: 'low-power',
+    })
+    if (!context) {
+      document.documentElement.dataset.water = 'fallback'
+      return
+    }
+
+    const canvas = el
+    const gl = context
+
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)')
+    let program: WebGLProgram | null = null
+    let buffer: WebGLBuffer | null = null
+    let uRes: WebGLUniformLocation | null = null
+    let uTime: WebGLUniformLocation | null = null
+    let uMouse: WebGLUniformLocation | null = null
+    let uHover: WebGLUniformLocation | null = null
+    let ready = false
+    let presented = false
+    let mouseX = 0.5
+    let mouseY = 0.7
+    let hover = 0
+    let target = 0
+    let frame = 0
+    let time = performance.now()
+
+    function stop() {
+      cancelAnimationFrame(frame)
+      frame = 0
+    }
+
+    function dispose() {
+      stop()
+      ready = false
+      presented = false
+      document.documentElement.dataset.water = 'fallback'
+      gl.useProgram(null)
+      gl.bindBuffer(gl.ARRAY_BUFFER, null)
+      if (buffer) gl.deleteBuffer(buffer)
+      if (program) gl.deleteProgram(program)
+      buffer = null
+      program = null
+      uRes = uTime = uMouse = uHover = null
+    }
+
+    function initialize() {
+      document.documentElement.dataset.water = 'loading'
+      let vs: WebGLShader | null = null
+      let fs: WebGLShader | null = null
+      try {
+        const precision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT)
+        if (!precision || precision.precision === 0 || gl.isContextLost()) return
+
+        program = gl.createProgram()
+        vs = compile(gl, gl.VERTEX_SHADER, VERT)
+        fs = compile(gl, gl.FRAGMENT_SHADER, FRAG)
+        if (!program || !vs || !fs) return
+
+        gl.attachShader(program, vs)
+        gl.attachShader(program, fs)
+        gl.linkProgram(program)
+        gl.detachShader(program, vs)
+        gl.detachShader(program, fs)
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return
+        gl.useProgram(program)
+
+        buffer = gl.createBuffer()
+        if (!buffer) return
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
+        const attr = gl.getAttribLocation(program, 'a')
+        if (attr < 0) return
+        gl.enableVertexAttribArray(attr)
+        gl.vertexAttribPointer(attr, 2, gl.FLOAT, false, 0, 0)
+
+        gl.enable(gl.BLEND)
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
+
+        uRes = gl.getUniformLocation(program, 'u_res')
+        uTime = gl.getUniformLocation(program, 'u_time')
+        uMouse = gl.getUniformLocation(program, 'u_mouse')
+        uHover = gl.getUniformLocation(program, 'u_hover')
+        ready = uRes !== null && uTime !== null && uMouse !== null && uHover !== null
+      } finally {
+        if (vs) gl.deleteShader(vs)
+        if (fs) gl.deleteShader(fs)
+        if (!ready) dispose()
+      }
+    }
+
+    function resize() {
+      const dpr = Math.min(devicePixelRatio || 1, 1.25)
+      const width = Math.round(innerWidth * dpr)
+      const height = Math.round(innerHeight * dpr)
+      if (canvas.width !== width) canvas.width = width
+      if (canvas.height !== height) canvas.height = height
+      gl.viewport(0, 0, canvas.width, canvas.height)
+      gl.uniform2f(uRes, canvas.width, canvas.height)
+    }
+
+    function draw(now: number) {
+      if (!ready || document.hidden) return
+      if (gl.isContextLost()) {
+        dispose()
+        return
+      }
+      if (!reduced.matches) time = now
+      hover += (target - hover) * 0.06
+      gl.uniform1f(uTime, time / 1000)
+      gl.uniform2f(uMouse, mouseX, mouseY)
+      gl.uniform1f(uHover, hover)
+      gl.clear(gl.COLOR_BUFFER_BIT)
+      gl.drawArrays(gl.TRIANGLES, 0, 3)
+      if (!presented) {
+        if (gl.isContextLost() || gl.getError() !== gl.NO_ERROR) {
+          dispose()
+          return
+        }
+        presented = true
+        document.documentElement.dataset.water = 'gl'
+      }
+    }
+
+    function loop(now: number) {
+      frame = 0
+      draw(now)
+      if (ready && !document.hidden && !reduced.matches) {
+        frame = requestAnimationFrame(loop)
+      }
+    }
+
+    function onPointerMove(event: PointerEvent) {
+      mouseX = event.clientX / innerWidth
+      mouseY = 1 - event.clientY / innerHeight
+      target = 1
+    }
+
+    function onPointerLeave() {
+      target = 0
+    }
+
+    function sync() {
+      stop()
+      if (!ready || document.hidden || gl.isContextLost()) return
+      resize()
+      if (reduced.matches) draw(performance.now())
+      else frame = requestAnimationFrame(loop)
+    }
+
+    function onContextLost(event: Event) {
+      event.preventDefault()
+      dispose()
+    }
+
+    function onContextRestored() {
+      initialize()
+      sync()
+    }
+
+    addEventListener('pointermove', onPointerMove, { passive: true })
+    addEventListener('resize', sync, { passive: true })
+    document.addEventListener('pointerleave', onPointerLeave, { passive: true })
+    document.addEventListener('visibilitychange', sync)
+    reduced.addEventListener('change', sync)
+    canvas.addEventListener('webglcontextlost', onContextLost)
+    canvas.addEventListener('webglcontextrestored', onContextRestored)
+
+    initialize()
+    sync()
+
+    return () => {
+      dispose()
+      removeEventListener('pointermove', onPointerMove)
+      removeEventListener('resize', sync)
+      document.removeEventListener('pointerleave', onPointerLeave)
+      document.removeEventListener('visibilitychange', sync)
+      reduced.removeEventListener('change', sync)
+      canvas.removeEventListener('webglcontextlost', onContextLost)
+      canvas.removeEventListener('webglcontextrestored', onContextRestored)
+    }
+  }, [])
+
+  return (
+    <canvas
+      ref={ref}
+      aria-hidden="true"
+      data-water-canvas="true"
+      className={
+        className ?? 'pointer-events-none fixed inset-0 -z-[3] h-full w-full'
+      }
+    />
+  )
+}

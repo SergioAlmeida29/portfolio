@@ -1,0 +1,50 @@
+name: now-refresh
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-refs/heads/main
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: [self-hosted, linux]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: instalar deps
+        run: npm ci
+
+      - name: recolher os numeros do github
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/now.mjs
+
+      - name: publicar se mudaram
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet src/content/now.generated.ts; then
+            echo 'Números iguais aos da última recolha — nada publicado.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          export RELEASE_ID="$(git rev-parse --short HEAD)-$(date -u +%Y%m%d%H%M)"
+          npm run build
+          bash infra/deploy-and-verify.sh prod
+
+          {
+            echo "## Números do GitHub actualizados"
+            echo
+            echo "Release \`$RELEASE_ID\` em produção."
+            echo
+            echo '```diff'
+            git diff --no-color -- src/content/now.generated.ts
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

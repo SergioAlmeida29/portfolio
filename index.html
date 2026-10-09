@@ -1,21 +1,38 @@
 <!doctype html>
-<html lang="pt">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>sergioalmeida.dev</title>
-  <style>
-    body{margin:0;height:100vh;display:grid;place-items:center;
-         font:500 1rem/1.5 system-ui,sans-serif;background:#0a0a0a;color:#e5e5e5}
-    div{text-align:center}
-    h1{font-size:1.25rem;letter-spacing:.02em;margin:0 0 .5rem}
-    p{margin:0;color:#737373;font-size:.875rem}
-  </style>
-</head>
-<body>
-  <div>
-    <h1>sergioalmeida.dev</h1>
-    <p>em construção</p>
-  </div>
-</body>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <style>html, body { background: #01050a; color: #eaf2f9; } html { color-scheme: dark; }</style>
+    <script>
+      const base = '%BASE_URL%'
+      const home = location.pathname === base || location.pathname === `${base}index.html`
+      document.documentElement.dataset.route = home ? 'home' : 'not-found'
+      if (home) {
+        document.documentElement.dataset.preview = 'liquid-glass'
+        document.documentElement.dataset.water = 'loading'
+        if (matchMedia('(prefers-reduced-transparency: reduce)').matches) {
+          document.documentElement.dataset.transparency = 'reduced'
+        }
+      }
+    </script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#01050a" />
+    <meta
+      name="description"
+      content="Sérgio Almeida — software engineer focused on backend and AI. Informatics and Computing Engineering student at FEUP, Porto. Open to new challenges."
+    />
+    <meta property="og:title" content="Sérgio Almeida" />
+    <meta
+      property="og:description"
+      content="Software engineer focused on backend and AI. FEUP student, Porto."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://sergioalmeida.dev" />
+    <title>Sérgio Almeida</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
