@@ -44,11 +44,26 @@ async function compareGlassScreenshots(page, active, inactive) {
   }, { active: active.toString('base64'), inactive: inactive.toString('base64') })
 }
 
-const readMapWidth = (map) => map.evaluate(async (element) => {
+const readMapPixels = (map) => map.evaluate(async (element) => {
   const image = new Image()
   image.src = element.getAttribute('href')
   await image.decode()
-  return image.naturalWidth
+  return image.naturalWidth * image.naturalHeight
+})
+
+const readCentralVariation = (map) => map.evaluate(async (element) => {
+  const image = new Image()
+  image.src = element.getAttribute('href')
+  await image.decode()
+  const canvas = document.createElement('canvas')
+  canvas.width = image.naturalWidth
+  canvas.height = image.naturalHeight
+  const context = canvas.getContext('2d')
+  context.drawImage(image, 0, 0)
+  const start = Math.floor(canvas.height / 4)
+  const pixels = context.getImageData(Math.floor(canvas.width / 4), start, 1, Math.floor(canvas.height / 2)).data
+  const red = Array.from(pixels).filter((_, index) => index % 4 === 0)
+  return Math.max(...red) - Math.min(...red)
 })
 
 try {
@@ -142,20 +157,23 @@ try {
       `${value}: disclosure identity and state must be preserved`)
   }
   const map = page.locator('.nav-shell feImage')
-  assert.equal(await readMapWidth(map), 512, 'mobile navigation must use a compact displacement map')
+  const mobileMap = await map.getAttribute('href')
+  assert.ok(await readMapPixels(map) <= 65536, 'mobile navigation must respect the displacement map pixel budget')
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.waitForFunction(async () => {
+  await page.waitForFunction(async previous => {
     const source = document.querySelector('.nav-shell feImage')?.getAttribute('href')
-    if (!source?.startsWith('data:image/png')) return false
+    if (!source?.startsWith('data:image/png') || source === previous) return false
     const image = new Image()
     image.src = source
     await image.decode()
-    return image.naturalWidth >= document.querySelector('.nav-shell').getBoundingClientRect().width
-  })
-  const mapWidth = await readMapWidth(map)
-  const desktopWidth = await shell.evaluate((element) => element.getBoundingClientRect().width)
-  assert.ok(mapWidth >= desktopWidth,
-    `navigation displacement map must resolve the full desktop width (${mapWidth} < ${desktopWidth})`)
+    return image.naturalWidth * image.naturalHeight <= 65536
+  }, mobileMap)
+  assert.ok(await readMapPixels(map) <= 65536, 'desktop navigation must respect the displacement map pixel budget')
+  assert.ok(await readCentralVariation(map) <= 1, 'horizontal refraction must stay constant across the central band without a crease')
+  const desktopMap = await map.getAttribute('href')
+  await page.mouse.wheel(0, 400)
+  await page.waitForTimeout(250)
+  assert.equal(await map.getAttribute('href'), desktopMap, 'scroll must not regenerate the navigation map')
   console.log('glass: deferred material and transparency preserve DOM, focus, scroll and state')
 } finally {
   await browser.close()
