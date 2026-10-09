@@ -36,8 +36,6 @@ jobs:
 
           PROMPT="Responde ao pedido abaixo. Inspecciona o código local; não alteres ficheiros nem publiques comentários. Devolve apenas a resposta final, em português europeu.
 
-          $(cat "$GITHUB_WORKSPACE/.github/scripts/contexto.md")
-
           Alvo: #$ALVO
           Pedido:
           $pedido"
