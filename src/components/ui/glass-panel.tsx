@@ -1,6 +1,6 @@
 import { Glass, type GlassOptics } from '@samasante/liquid-glass'
 import { animate, motion, useMotionValue, useReducedMotion, useSpring } from 'motion/react'
-import { useEffect, useMemo, useState, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useState, type PointerEvent, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { EmptyBackdropGlass } from './empty-backdrop-glass'
 import { Reveal } from './reveal'
@@ -31,12 +31,13 @@ const navigationOptics = {
   dispersion: 1,
   frost: 1.2,
   specular: 0.9,
-  sheen: 0.72,
-  sheenWidth: 2.4,
-  glow: 0.04,
+  mapSize: 256,
+  clipToShape: false,
+  softEdge: false,
+  sheen: 0,
+  glow: 0,
 }
 const materialStyle = { display: 'block', position: 'absolute', inset: 0, borderRadius: 'inherit' } as const
-const navigationMapSize = () => Math.min(1536, Math.max(512, Math.ceil(window.innerWidth / 256) * 256))
 
 type PanelProps = {
   children: ReactNode
@@ -54,16 +55,7 @@ export function GlassPanel({ delay = 0, ...props }: PanelProps & { delay?: numbe
 }
 
 export function NavigationGlass(props: PanelProps) {
-  const [mapSize, setMapSize] = useState(navigationMapSize)
-  const navOptics = useMemo(() => ({ ...navigationOptics, mapSize }), [mapSize])
-
-  useEffect(() => {
-    const resize = () => setMapSize(navigationMapSize())
-    window.addEventListener('resize', resize)
-    return () => window.removeEventListener('resize', resize)
-  }, [])
-
-  return <GlassSurface {...props} navOptics={navOptics} />
+  return <GlassSurface {...props} navOptics={navigationOptics} />
 }
 
 function GlassSurface({ children, className, navOptics, defer = false }: PanelProps & {
