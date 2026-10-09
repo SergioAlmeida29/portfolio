@@ -20,7 +20,7 @@ jobs:
     steps:
       # profundidade completa: sem ela não há base contra a qual comparar e o
       # modelo revê o ficheiro inteiro em vez da mudança
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
