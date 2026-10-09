@@ -61,7 +61,7 @@ jobs:
         run: npm ci
 
       - name: obter conteúdo validado
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: site-content
           path: src/content/
@@ -133,7 +133,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: obter artifact do deploy
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: deploy-dist
           path: dist/
@@ -155,7 +155,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: obter artifact do deploy
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: deploy-dist
           path: dist/
