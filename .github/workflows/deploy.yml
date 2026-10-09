@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  quality:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -35,6 +35,36 @@ jobs:
 
       - name: lint
         run: npm run lint
+
+      - name: guardar conteúdo validado
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-content
+          path: src/content/now.generated.ts
+          if-no-files-found: error
+          retention-days: 1
+
+  build:
+    needs: quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: instalar deps
+        run: npm ci
+
+      - name: obter conteúdo validado
+        uses: actions/download-artifact@v5
+        with:
+          name: site-content
+          path: src/content/
 
       - name: instalar browsers de teste
         run: npx playwright install --with-deps chromium firefox webkit
