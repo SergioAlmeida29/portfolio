@@ -40,8 +40,6 @@ jobs:
 
           O diff está em: git diff $BASE_SHA...HEAD
 
-          $(cat "$GITHUB_WORKSPACE/.github/scripts/contexto.md")
-
           Revê em silêncio e responde uma só vez, no fim.
 
           Regra de prova, acima de todas as outras: antes de apontares seja o que for,
@@ -53,7 +51,7 @@ jobs:
 
           Aponta apenas o que precisa de correcção antes do merge:
           - bugs reais e problemas de qualidade;
-          - violações de segurança, arquitectura e comportamento das regras permanentes acima;
+          - violações de segurança, arquitectura e comportamento esperado do projecto;
             formatação e estilo são responsabilidade do oxlint, não desta revisão;
           - regressões de performance: trabalho por frame, listeners sem limpeza, imagens ou
             modelos sem limite de tamanho, dependência nova que engorde o bundle;

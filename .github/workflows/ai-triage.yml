@@ -71,8 +71,6 @@ jobs:
         run: |
           PROMPT="Faz a triagem do issue ou pull request #$ALVO aplicando etiquetas. NÃO escrevas nenhum comentário: a única escrita permitida é aplicar etiquetas.
 
-          $(cat "$GITHUB_WORKSPACE/.github/scripts/contexto.md")
-
           Passos:
 
           1. Lê o título e o corpo:
