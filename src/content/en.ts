@@ -290,17 +290,6 @@ export const en: SiteContent = {
     ],
   },
 
-  about: {
-    title: 'About',
-    headline:
-      'I have shipped a product alone, end to end, and I have shipped inside a team of ten. The engineering that matters is the same: understand the constraint, find the smallest change that holds, and prove it.',
-    body: [
-      'Informatics and Computing Engineering student at FEUP, focused on backend, artificial intelligence and data. At WEBA I was the only developer on an invoice automation product: I wrote the Angular frontend, the .NET backend, the OCR pipeline, the Docker setup and the CI/CD, and left it production-ready. At ARMIS I was one of more than ten people building ticketing intelligence for the Portuguese Football Federation, where the API and the predictive models were mine.',
-      'Those two internships taught me opposite lessons: owning every decision, and fitting into decisions already made. Open source taught me a third one. In Ultralytics and Uno Platform I work in codebases that are not mine, where the only acceptable change is the smallest one you can defend with a test.',
-      'What I want next is to stay close to that seam: backend systems where an API, a model and a real user meet.',
-    ],
-  },
-
   notFound: {
     code: 'Error 404',
     title: 'Page not found',

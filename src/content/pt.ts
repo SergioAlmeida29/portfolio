@@ -290,17 +290,6 @@ export const pt: SiteContent = {
     ],
   },
 
-  about: {
-    title: 'Sobre',
-    headline:
-      'Já entreguei um produto sozinho, de ponta a ponta, e já entreguei dentro de uma equipa de dez. A engenharia que interessa é a mesma: perceber a restrição, encontrar a menor mudança que se aguenta, e prová-la.',
-    body: [
-      'Estudante de Engenharia Informática e Computação na FEUP, com foco em backend, inteligência artificial e dados. Na WEBA fui o único developer de um produto de automação de faturas: escrevi o frontend em Angular, o backend em .NET, o pipeline de OCR, o Docker e o CI/CD, e deixei-o pronto para produção. Na ARMIS fui uma de mais de dez pessoas a construir ticketing intelligence para a Federação Portuguesa de Futebol, onde a API e os modelos preditivos eram meus.',
-      'Estes dois estágios ensinaram-me lições opostas: ser dono de todas as decisões, e encaixar em decisões já tomadas. O open source ensinou-me uma terceira. Na Ultralytics e na Uno Platform trabalho em codebases que não são minhas, onde a única mudança aceitável é a mais pequena que se consegue defender com um teste.',
-      'O que quero a seguir é continuar nessa costura: sistemas backend onde uma API, um modelo e um utilizador real se encontram.',
-    ],
-  },
-
   notFound: {
     code: 'Erro 404',
     title: 'Página não encontrada',

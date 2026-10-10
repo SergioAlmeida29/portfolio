@@ -124,7 +124,7 @@ try {
     await page.locator('.nav-sections a[href="#education"]').click()
     await page.waitForFunction(() => document.querySelector('.nav-sections [aria-current]')?.getAttribute('href') === '#education')
     assert.equal(await page.locator('.nav-sections [aria-current]').getAttribute('href'), '#education')
-    assert.equal(await page.locator('#about').count(), 1, 'About must stay until copy review')
+    assert.equal(await page.locator('#about').count(), 0, 'About has been removed')
     await page.locator('.nav-brand').click()
     await page.waitForFunction(() => window.scrollY < 2 && !document.querySelector('.nav-active-line'), undefined, { timeout: 5000 })
     assert.equal(await page.locator('.nav-active-line').count(), 0)

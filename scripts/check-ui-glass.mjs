@@ -68,6 +68,15 @@ const readCentralVariation = (map) => map.evaluate(async (element) => {
 
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
+  await page.addInitScript(() => {
+    window.panelMapCount = 0
+    const createImageData = CanvasRenderingContext2D.prototype.createImageData
+    CanvasRenderingContext2D.prototype.createImageData = function (...args) {
+      const image = createImageData.apply(this, args)
+      if (image.width === 512 && image.height === 512) window.panelMapCount++
+      return image
+    }
+  })
   await page.goto(`${base}/`)
   const brand = page.locator('.nav-brand')
   await brand.focus()
@@ -137,7 +146,25 @@ try {
   await page.evaluate(() => document.querySelector('[data-glass-composition-test]')?.remove())
 
   const disclosure = page.locator('#work button[aria-expanded]').first()
+  await disclosure.scrollIntoViewIfNeeded()
+  const panelMask = page.locator('#work [data-liquid-glass="empty-backdrop"] > [data-lg-layer]').nth(1)
+  await page.waitForFunction(() => {
+    const mask = document.querySelector('#work [data-liquid-glass="empty-backdrop"] > [data-lg-layer]:nth-child(2)')
+    return mask && getComputedStyle(mask).maskImage.includes('data:image/png')
+  })
+  await page.waitForTimeout(400)
+  const closedMask = await panelMask.evaluate(element => element.style.maskImage)
+  await page.evaluate(() => { window.panelMapCount = 0 })
   await disclosure.click()
+  await page.waitForTimeout(100)
+  assert.equal(await panelMask.evaluate(element => getComputedStyle(element).visibility), 'visible',
+    'the existing reflection must remain visible during expansion')
+  await page.waitForFunction(previous => {
+    const mask = document.querySelector('#work [data-liquid-glass="empty-backdrop"] > [data-lg-layer]:nth-child(2)')
+    return mask && mask.style.maskImage !== previous && getComputedStyle(mask).visibility === 'visible'
+  }, closedMask)
+  assert.equal(await page.evaluate(() => window.panelMapCount), 1,
+    'expansion must generate one final mask instead of a mask on every animation frame')
   await page.locator('.nav-sections a[href="#education"]').focus()
   await page.evaluate(() => {
     window.originalLink = document.activeElement

@@ -6,6 +6,7 @@ const base = normalize(process.env.BASE_URL ?? 'http://127.0.0.1:4173')
 const targets = [['before', base]]
 if (process.env.COMPARE_URL) targets.push(['after', normalize(process.env.COMPARE_URL)])
 const runs = Number(process.env.RUNS ?? 3)
+const viewport = { width: Number(process.env.WIDTH ?? 1440), height: 900 }
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_PATH || undefined,
   args: process.env.HARDWARE ? ['--enable-gpu', '--use-angle=gl'] : ['--enable-unsafe-swiftshader'],
@@ -16,14 +17,14 @@ const results = []
 try {
   // Warm each build's shaders before collecting comparable samples.
   for (const [, url] of targets) {
-    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+    const page = await browser.newPage({ viewport })
     await page.goto(`${url}/`)
     await page.waitForTimeout(2500)
     await page.close()
   }
   for (let run = 0; run < runs; run++) {
     for (const [label, url] of targets) {
-      const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'en-US' })
+      const page = await browser.newPage({ viewport, locale: 'en-US' })
       await page.addInitScript(() => {
         window.__work = { maps: 0, pngMs: 0, imageBytes: 0, rects: 0, longMs: 0, longCount: 0 }
         const toDataURL = HTMLCanvasElement.prototype.toDataURL
@@ -62,6 +63,7 @@ try {
         }).observe({ type: 'longtask', buffered: true })
       })
       const client = await page.context().newCDPSession(page)
+      await client.send('Emulation.setCPUThrottlingRate', { rate: Number(process.env.CPU_RATE ?? 1) })
       await client.send('Performance.enable')
       await page.goto(`${url}/`)
       await page.locator('.hero h1').waitFor()
@@ -106,7 +108,7 @@ try {
       await page.close()
     }
   }
-  console.log(JSON.stringify({ renderer: gpu.auxAttributes.glRenderer, features: gpu.featureStatus, results }, null, 2))
+  console.log(JSON.stringify({ renderer: gpu.auxAttributes.glRenderer, features: gpu.featureStatus, viewport, cpuRate: Number(process.env.CPU_RATE ?? 1), results }, null, 2))
 } finally {
   await browser.close()
 }
