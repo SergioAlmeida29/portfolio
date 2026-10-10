@@ -52,6 +52,7 @@ export function EmptyBackdropGlass({
     const el = root.current, overlay = mask.current
     if (!el || !overlay || !enabled) return
     let mapRequest = 0
+    let resizeTimer: ReturnType<typeof setTimeout>
     const measure = () => {
       const cs = getComputedStyle(el)
       const { width, height } = el.getBoundingClientRect()
@@ -68,7 +69,6 @@ export function EmptyBackdropGlass({
         return
       }
       const request = ++mapRequest
-      overlay.style.visibility = 'hidden'
       void getSpecularMap(width, height, radius, optics).then((url) => {
         if (request !== mapRequest || !overlay.isConnected) return
         const image = `url("${url}")`
@@ -80,10 +80,15 @@ export function EmptyBackdropGlass({
       })
     }
     measure()
-    const observer = new ResizeObserver(measure)
+    const observer = new ResizeObserver(() => {
+      mapRequest++
+      clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(measure, 120)
+    })
     observer.observe(el)
     return () => {
       observer.disconnect()
+      clearTimeout(resizeTimer)
       mapRequest++
     }
   }, [optics, enabled, brightness, o.brightness, mapKey])
