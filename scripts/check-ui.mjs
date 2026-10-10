@@ -185,4 +185,5 @@ try {
 
 await import('./check-ui-navigation.mjs')
 await import('./check-ui-glass.mjs')
+await import('./check-ui-loading.mjs')
 await import('./check-ui-fallbacks.mjs')
