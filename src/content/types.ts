@@ -85,7 +85,6 @@ export type SiteContent = {
     languagesLabel: string
     languages: string[]
   }
-  about: { title: string; headline: string; body: string[] }
   notFound: { code: string; title: string; back: string }
   contact: {
     heading: string

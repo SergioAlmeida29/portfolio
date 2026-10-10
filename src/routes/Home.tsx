@@ -1,4 +1,3 @@
-import { About } from '../components/About'
 import { Contact } from '../components/Contact'
 import { Contributions } from '../components/Contributions'
 import { Education } from '../components/Education'
@@ -15,7 +14,6 @@ export function Home() {
       <Projects />
       <Skills />
       <Education />
-      <About />
       <Contact />
     </>
   )
