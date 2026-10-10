@@ -1,5 +1,7 @@
 import { motion, useReducedMotion } from 'motion/react'
+import { useContext } from 'react'
 import { cn } from '../../lib/cn'
+import { EntranceReadyContext } from '../../lib/entrance'
 
 export function WordReveal({
   text,
@@ -15,19 +17,25 @@ export function WordReveal({
   inView?: boolean
 }) {
   const reduce = useReducedMotion()
+  const ready = useContext(EntranceReadyContext)
   const words = text.split(' ')
 
   if (reduce) return <span className={className}>{text}</span>
 
-  const animation = { variants: { hidden: { y: '115%' }, visible: { y: '0%' } } }
+  const animation = {
+    variants: {
+      hidden: { transform: 'translateY(115%)' },
+      visible: { transform: 'translateY(0%)' },
+    },
+  }
 
   return (
     <motion.span
       className={cn('inline-flex flex-wrap', className)}
       // Observe the visible wrapper, not a translated child clipped by overflow.
       initial="hidden"
-      animate={!inView ? 'visible' : undefined}
-      whileInView={inView ? 'visible' : undefined}
+      animate={!inView && ready ? 'visible' : undefined}
+      whileInView={inView && ready ? 'visible' : undefined}
       viewport={{ once: true, amount: 0.2 }}
     >
       {words.map((word, i) => (

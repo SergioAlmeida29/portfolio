@@ -1,8 +1,9 @@
 import { IconDownload } from '@tabler/icons-react'
 import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
-import { useRef } from 'react'
+import { useContext, useRef } from 'react'
 import { useContent } from '../content'
 import { cvUrl } from '../lib/base'
+import { EntranceReadyContext } from '../lib/entrance'
 import { NowPanel } from './NowPanel'
 import { WordReveal } from './ui/word-reveal'
 
@@ -12,13 +13,14 @@ const nativeParallax = CSS.supports('view-timeline-name', '--hero') &&
 export function Hero() {
   const { hero } = useContent()
   const reduce = useReducedMotion()
+  const ready = useContext(EntranceReadyContext)
   const ref = useRef<HTMLElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
   const drift = useTransform(scrollYProgress, [0, 1], ['0vw', '14vw'])
   const nameDrift = useTransform(scrollYProgress, [0, 1], ['0vw', '-12vw'])
   const rise = (delay: number) => ({
-    initial: reduce ? false : { opacity: 0, y: 14 },
-    animate: { opacity: 1, y: 0 },
+    initial: reduce ? false : { opacity: 0, transform: 'translateY(14px)' },
+    animate: reduce || ready ? { opacity: 1, transform: 'translateY(0px)' } : undefined,
     transition: { duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] as const },
   })
 

@@ -5,9 +5,11 @@ import { Hero } from '../components/Hero'
 import { Internships } from '../components/Internships'
 import { Projects } from '../components/Projects'
 import { Skills } from '../components/Skills'
+import { Entrance } from '../components/ui/entrance'
+
 export function Home() {
   return (
-    <>
+    <Entrance>
       <Hero />
       <Internships />
       <Contributions />
@@ -15,6 +17,6 @@ export function Home() {
       <Skills />
       <Education />
       <Contact />
-    </>
+    </Entrance>
   )
 }

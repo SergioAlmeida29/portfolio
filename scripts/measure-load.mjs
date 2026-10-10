@@ -21,7 +21,28 @@ try {
           const client = await context.newCDPSession(page)
           await client.send('Emulation.setCPUThrottlingRate', { rate: Number(process.env.CPU_RATE ?? 1) })
           await page.addInitScript(() => {
-            window.loadProbe = { maps: 0, pngMs: 0, imageBytes: 0, longMs: 0, lcpCandidateMs: 0, layoutShiftSum: 0 }
+            window.loadProbe = { maps: 0, pngMs: 0, imageBytes: 0, longMs: 0, lcpCandidateMs: 0, layoutShiftSum: 0, entrance: [] }
+            const start = performance.now()
+            let previous = start
+            const sample = now => {
+              document.querySelectorAll('.hero h1 .will-change-transform').forEach((word, index) => {
+                const entry = window.loadProbe.entrance[index] ??= { text: word.textContent, gaps: [] }
+                if (entry.completeMs) return
+                const y = new DOMMatrixReadOnly(getComputedStyle(word).transform).m42
+                if (y < word.offsetHeight && (y > 0.01 || entry.startMs)) {
+                  if (!entry.startMs) {
+                    entry.startMs = now
+                    entry.native = word.getAnimations().some(animation => animation.effect.getKeyframes().some(frame => frame.transform))
+                    entry.fonts = document.fonts.status
+                  }
+                  entry.gaps.push(now - previous)
+                  if (y <= 0.01) entry.completeMs = now
+                }
+              })
+              previous = now
+              if (now - start < 10000 && (window.loadProbe.entrance.length < 2 || window.loadProbe.entrance.some(entry => !entry.completeMs))) requestAnimationFrame(sample)
+            }
+            requestAnimationFrame(sample)
             const encode = HTMLCanvasElement.prototype.toDataURL
             HTMLCanvasElement.prototype.toDataURL = function (...args) {
               const start = performance.now()
@@ -66,6 +87,10 @@ try {
               const navigation = performance.getEntriesByType('navigation')[0]
               return {
                 ...window.loadProbe,
+                entrance: window.loadProbe.entrance.map(({ gaps, ...entry }) => {
+                  const ordered = [...gaps].sort((a, b) => a - b)
+                  return { ...entry, frames: gaps.length, p95Ms: ordered[Math.floor(ordered.length * 0.95)], maxGapMs: Math.max(...gaps), over34ms: gaps.filter(gap => gap > 34).length }
+                }),
                 fcpMs: performance.getEntriesByName('first-contentful-paint')[0]?.startTime ?? null,
                 transferBytes: navigation.transferSize + resources.reduce((sum, entry) => sum + entry.transferSize, 0),
                 resources: resources.map(entry => ({ url: new URL(entry.name).pathname, transferBytes: entry.transferSize })),

@@ -1,5 +1,6 @@
 import { motion, useReducedMotion } from 'motion/react'
-import type { ReactNode } from 'react'
+import { useContext, type ReactNode } from 'react'
+import { EntranceReadyContext } from '../../lib/entrance'
 
 export function Reveal({
   children,
@@ -11,13 +12,14 @@ export function Reveal({
   className?: string
 }) {
   const reduce = useReducedMotion()
+  const ready = useContext(EntranceReadyContext)
 
   return (
     <motion.div
       className={className}
-      animate={reduce ? { opacity: 1, y: 0 } : undefined}
-      initial={reduce ? false : { opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      animate={reduce ? { opacity: 1, transform: 'translateY(0px)' } : undefined}
+      initial={reduce ? false : { opacity: 0, transform: 'translateY(28px)' }}
+      whileInView={ready ? { opacity: 1, transform: 'translateY(0px)' } : undefined}
       viewport={{ once: true, amount: 0.12, margin: '0px 0px -6% 0px' }}
       transition={{
         duration: reduce ? 0 : 0.8,
