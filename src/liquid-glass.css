@@ -362,7 +362,6 @@ html[data-preview] #skills .marquee { margin-inline: 0; }
   html[data-preview] .hero-role { font-family: var(--font-sans); text-transform: none; letter-spacing: 0; font-size: 14px; }
   html[data-preview] .hero-lede { order: 2; font-size: 18px; max-width: 34ch; }
   html[data-preview] .hero-actions { order: 3; gap: 8px; }
-  html[data-preview] :is(.hero-first, .hero-last) { animation: none; transform: none !important; }
   html[data-preview] .hero-last { margin-left: 0; text-align: right; }
   html[data-preview] .hero-actions a { min-height: 44px; padding-inline: 16px; }
   html[data-preview] .hero-actions a:last-child { padding-inline: 8px; }
