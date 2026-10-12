@@ -5,6 +5,7 @@ import { useContent } from '../content'
 import { cvUrl } from '../lib/base'
 import { EntranceReadyContext } from '../lib/entrance'
 import { NowPanel } from './NowPanel'
+import { LangToggle } from './LangToggle'
 import { WordReveal } from './ui/word-reveal'
 
 const nativeParallax = CSS.supports('view-timeline-name', '--hero') &&
@@ -26,6 +27,10 @@ export function Hero() {
 
   return (
     <section ref={ref} data-native-scroll={nativeParallax || undefined} className="hero mx-auto grid min-h-[100dvh] max-w-6xl content-center gap-14 px-6 pt-28 pb-20 md:px-10 lg:grid-cols-12 lg:gap-10 xl:max-w-7xl">
+      <div className="mobile-masthead">
+        <span>sergioalmeida.dev</span>
+        <LangToggle />
+      </div>
       <div className="hero-copy lg:col-span-7 xl:col-span-7">
         <motion.div
           {...rise(0.02)}

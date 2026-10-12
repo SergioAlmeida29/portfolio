@@ -86,13 +86,14 @@ try {
     'deferred material must preserve the focused navigation node')
 
   await page.evaluate(() => {
+    const navigation = document.querySelector('.nav-shell').getBoundingClientRect()
     const backdrop = document.createElement('div')
     backdrop.dataset.glassCompositionTest = 'true'
     Object.assign(backdrop.style, {
       position: 'fixed',
       zIndex: '30',
-      inset: '0 0 auto',
-      height: '150px',
+      inset: `${navigation.top - 30}px 0 auto`,
+      height: `${navigation.height + 60}px`,
       pointerEvents: 'none',
       background: 'repeating-linear-gradient(90deg, #fff 0 10px, #000 10px 20px)',
       color: '#f00',
@@ -165,6 +166,7 @@ try {
   }, closedMask)
   assert.equal(await page.evaluate(() => window.panelMapCount), 1,
     'expansion must generate one final mask instead of a mask on every animation frame')
+  await page.locator('.nav-toggle[aria-expanded="false"]').click()
   await page.locator('.nav-sections a[href="#education"]').focus()
   await page.evaluate(() => {
     window.originalLink = document.activeElement

@@ -1,10 +1,13 @@
 import { motion, useReducedMotion, useScroll } from 'motion/react'
+import { IconChevronDown, IconMenu2 } from '@tabler/icons-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useContent } from '../content'
 import { baseUrl, cvUrl } from '../lib/base'
 import { isHome } from '../lib/route'
 import { LangToggle } from './LangToggle'
 import { NavigationGlass } from './ui/glass-panel'
+
+const mobileNavigation = '(max-width: 1023px) and (orientation: portrait)'
 
 export function Nav() {
   return isHome ? <HomeNav /> : <DefaultNav />
@@ -63,6 +66,10 @@ function HomeNav() {
   const header = useRef<HTMLElement>(null)
   const strip = useRef<HTMLElement>(null)
   const [activeHref, setActiveHref] = useState<string | null>(null)
+  const [compact, setCompact] = useState(false)
+  const expandedAt = useRef<number | null>(null)
+  const toggle = useRef<HTMLButtonElement>(null)
+  const sectionsId = useId()
   const underlineId = useId()
   const reducedMotion = useReducedMotion()
 
@@ -76,12 +83,13 @@ function HomeNav() {
     let threshold = 0
     let lastSectionThreshold = 0
     let positions: { href: string; top: number }[] = []
+    const mobile = matchMedia(mobileNavigation)
 
     function update() {
       frame = 0
       const scroll = window.scrollY
       if (geometryDirty) {
-        const headerBottom = header.current?.getBoundingClientRect().bottom ?? 0
+        const headerBottom = mobile.matches ? 0 : header.current?.getBoundingClientRect().bottom ?? 0
         threshold = Math.min(headerBottom + 60, window.innerHeight * 0.4)
         lastSectionThreshold = Math.max(
           threshold,
@@ -99,6 +107,17 @@ function HomeNav() {
         next = lastSection.href
       }
       setActiveHref(next)
+      if (!mobile.matches) {
+        expandedAt.current = null
+        setCompact(false)
+      } else if (expandedAt.current === null || Math.abs(scroll - expandedAt.current) > 48) {
+        const keyboardFocus = header.current?.contains(document.activeElement) && document.activeElement?.matches(':focus-visible')
+        if (!keyboardFocus) {
+          if (scroll < 64) setCompact(false)
+          else if (scroll > 160) setCompact(true)
+          expandedAt.current = null
+        }
+      }
     }
 
     function scheduleUpdate() {
@@ -128,7 +147,7 @@ function HomeNav() {
 
   useEffect(() => {
     const container = strip.current
-    if (!container || !activeHref ||
+    if (!container || compact || !activeHref ||
         (container.contains(document.activeElement) && document.activeElement?.matches(':focus-visible'))) return
     const link = Array.from(container.querySelectorAll<HTMLAnchorElement>('a')).find((item) => item.hash === activeHref)
     if (!link) return
@@ -141,22 +160,40 @@ function HomeNav() {
       // Scroll only the strip, never an ancestor or the page.
       container.scrollTo({ left: container.scrollLeft + delta, behavior: reducedMotion ? 'instant' : 'smooth' })
     }
-  }, [activeHref, nav.links, reducedMotion])
+  }, [activeHref, compact, nav.links, reducedMotion])
 
   return (
-    <header ref={header} className="glass-nav fixed inset-x-0 top-0 z-40">
+    <header
+      ref={header}
+      className="glass-nav fixed inset-x-0 top-0 z-40"
+      data-compact={compact || undefined}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && matchMedia(mobileNavigation).matches) {
+          expandedAt.current = window.scrollY
+          setCompact(true)
+          toggle.current?.focus()
+        }
+      }}
+    >
       <NavigationGlass className="nav-shell">
         <div className="nav-inner">
-          <a href="#top" className="nav-brand">
-            Sérgio Almeida
+          <a href="#top" className="nav-brand" aria-label={`Sérgio Almeida — ${ui.backToTop}`}>
+            <span className="nav-brand-full">Sérgio Almeida</span>
+            <span className="nav-brand-short" aria-hidden>SA</span>
           </a>
-          <motion.nav ref={strip} className="nav-sections" aria-label={ui.menu} layoutScroll data-lenis-prevent>
+          <motion.nav id={sectionsId} ref={strip} className="nav-sections" aria-label={ui.menu} layoutScroll data-lenis-prevent>
             {nav.links.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
                 className="nav-section-link"
                 aria-current={activeHref === link.href ? 'location' : undefined}
+                onClick={() => {
+                  if (matchMedia(mobileNavigation).matches) {
+                    expandedAt.current = window.scrollY
+                    setCompact(true)
+                  }
+                }}
               >
                 {link.label}
                 {activeHref === link.href && (
@@ -181,6 +218,21 @@ function HomeNav() {
             </a>
             <LangToggle />
           </div>
+          <button
+            ref={toggle}
+            type="button"
+            className="nav-toggle"
+            aria-label={`${compact ? ui.open : ui.close} ${ui.menu}`}
+            aria-expanded={!compact}
+            aria-controls={sectionsId}
+            onClick={() => {
+              expandedAt.current = window.scrollY
+              setCompact(value => !value)
+            }}
+          >
+            <span className="nav-current">{nav.links.find(link => link.href === activeHref)?.label ?? ui.menu}</span>
+            {compact ? <IconMenu2 size={20} stroke={1.5} /> : <IconChevronDown size={20} stroke={1.5} />}
+          </button>
         </div>
       </NavigationGlass>
     </header>
