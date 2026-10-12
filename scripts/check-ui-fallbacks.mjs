@@ -70,9 +70,16 @@ for (const [name, engine, options] of [
           await page.keyboard.press('Escape')
           assert.equal(await toggle.getAttribute('aria-expanded'), 'false')
           assert.ok(await toggle.evaluate(el => el === document.activeElement), `${label}: Escape returns focus`)
-          await page.setViewportSize({ width: 844, height: 390 })
-          assert.ok((await navigation.boundingBox()).y > 280, `${label}: bottom navigation in landscape`)
+          for (const [width, height] of [[568, 320], [844, 390]]) {
+            await page.setViewportSize({ width, height })
+            assert.ok((await navigation.boundingBox()).y < 24, `${label}: top navigation at ${width} landscape`)
+            assert.equal(await toggle.isVisible(), false, `${label}: no mobile menu at ${width} landscape`)
+            assert.equal(await page.locator('.mobile-masthead').isVisible(), false, `${label}: no mobile masthead at ${width} landscape`)
+            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${label}: no overflow at ${width} landscape`)
+          }
+          assert.equal(await page.locator('.hero').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length), 2, `${label}: side-by-side hero at 844 landscape`)
           await page.setViewportSize({ width: 390, height: 844 })
+          assert.ok((await navigation.boundingBox()).y > 740, `${label}: bottom navigation returns in portrait`)
           const button = page.locator('#work button[aria-expanded]').first()
           await button.scrollIntoViewIfNeeded()
           await button.focus()

@@ -7,7 +7,7 @@ import { isHome } from '../lib/route'
 import { LangToggle } from './LangToggle'
 import { NavigationGlass } from './ui/glass-panel'
 
-const mobileNavigation = '(max-width: 1023px)'
+const mobileNavigation = '(max-width: 1023px) and (orientation: portrait)'
 
 export function Nav() {
   return isHome ? <HomeNav /> : <DefaultNav />
