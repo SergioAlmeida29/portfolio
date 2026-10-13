@@ -122,7 +122,6 @@ try {
     issues,
     repos,
     contributions,
-    days: DAYS,
     collectedAt: new Date().toISOString(),
   })
   console.log(
@@ -142,7 +141,6 @@ try {
       issues: 0,
       repos: [],
       contributions: [],
-      days: DAYS,
       collectedAt: null,
     })
   }

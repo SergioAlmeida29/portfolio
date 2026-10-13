@@ -11,7 +11,7 @@ export function Internships() {
     <Section id="work" title={internships.title}>
       <div className="grid gap-5">
         {internships.roles.map((r, i) => (
-          <GlassPanel key={i} delay={i * 0.08} defer className="glass rounded-xl p-7 md:p-9">
+          <GlassPanel key={i} delay={i * 0.08} defer className="rounded-xl p-7 md:p-9">
             <Expandable
               label={r.org}
               head={

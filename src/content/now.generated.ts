@@ -32,6 +32,5 @@ export const now = {
       "deletions": 2
     }
   ],
-  "days": 7,
   "collectedAt": "2026-09-13T10:53:44.830Z"
 } as const

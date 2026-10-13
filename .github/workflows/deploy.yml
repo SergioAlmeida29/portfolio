@@ -96,6 +96,9 @@ jobs:
           if [ "$MODE" = "staging" ]; then node scripts/robots.mjs; fi
           echo "base=$BASE" >> "$GITHUB_OUTPUT"
 
+      - name: verificar orçamento do bundle
+        run: npm run test:bundle
+
       - name: testar artifact do deploy
         timeout-minutes: 10
         env:
