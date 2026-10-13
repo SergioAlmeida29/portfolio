@@ -32,7 +32,7 @@ export function Contact() {
           <WordReveal text={contact.heading} inView stagger={0.07} />
         </h2>
 
-        <GlassPanel delay={0.1} defer className="glass mt-12 rounded-xl p-8 md:p-12">
+        <GlassPanel delay={0.1} defer className="mt-12 rounded-xl p-8 md:p-12">
           <a
             href={`mailto:${contact.email}`}
             className="group inline-flex items-center gap-3 text-xl tracking-tight text-fg transition-colors hover:text-accent sm:text-3xl"

@@ -136,12 +136,6 @@ html[data-preview] .glass-material {
   background: var(--glass-tint);
 }
 html[data-preview] .glass-content { position: relative; }
-html[data-preview] .glass::before,
-html[data-preview] .glass::after,
-html[data-preview] .glass-panel::after {
-  display: none;
-  animation: none;
-}
 html[data-preview] .glass-panel {
   min-width: 0;
   border-radius: 20px;
@@ -187,7 +181,7 @@ html[data-preview] .liquid-panel[data-opaque] {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
-html[data-preview][data-transparency='reduced'] :is(.liquid-panel, .glass, .glass-panel, .glass-nav, .glass-soft) {
+html[data-preview][data-transparency='reduced'] :is(.liquid-panel, .glass-panel, .glass-nav, .glass-soft) {
   background: #0a1c2e;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;

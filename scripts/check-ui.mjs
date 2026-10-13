@@ -84,7 +84,7 @@ try {
     const after = await panel.boundingBox()
     assert.ok(after.height > before.height, 'accordion expanded')
     assert.equal(Math.round(after.width), Math.round(before.width), 'glass must not stretch horizontally')
-    assert.equal(await panel.evaluate(el => getComputedStyle(el, '::after').display), 'none', 'no stretching central sheen')
+    assert.equal(await panel.evaluate(el => getComputedStyle(el, '::after').content), 'none', 'no stretching central sheen')
     if ([1280, 390].includes(width)) await save(page, `root-${width}-expanded`)
     await page.keyboard.press('Enter')
     await page.waitForTimeout(600)

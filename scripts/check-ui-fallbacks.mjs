@@ -220,9 +220,9 @@ try {
       await page.waitForFunction(() => !document.documentElement.classList.contains('lenis'))
       await page.waitForFunction(() => document.documentElement.dataset.transparency === 'reduced')
       await page.locator('.now-card[data-opaque]').waitFor()
-      const panels = page.locator('.liquid-panel, .glass, .glass-panel, .glass-nav, .glass-soft')
+      const panels = page.locator('.liquid-panel, .glass-panel, .glass-nav, .glass-soft')
       assert.ok(await panels.count() > 0, `${route}: transparency check must cover panels`)
-      await page.waitForFunction(() => Array.from(document.querySelectorAll('.liquid-panel, .glass, .glass-panel, .glass-nav, .glass-soft')).every((el) => {
+      await page.waitForFunction(() => Array.from(document.querySelectorAll('.liquid-panel, .glass-panel, .glass-nav, .glass-soft')).every((el) => {
         const style = getComputedStyle(el)
         return (style.backdropFilter || style.webkitBackdropFilter || 'none') === 'none'
       }), undefined, { timeout: 5000 })
