@@ -1,12 +1,13 @@
 name: preview-cleanup
 
 on:
-  pull_request:
+  pull_request_target:
     types: [closed]
 
 concurrency:
   group: preview-${{ github.event.pull_request.number }}
   cancel-in-progress: false
+  queue: max
 
 jobs:
   cleanup:

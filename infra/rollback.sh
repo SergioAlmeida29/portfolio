@@ -24,6 +24,8 @@ if [ -z "$ALVO" ]; then
   [ -n "$ALVO" ] || { echo "nao ha release anterior para onde voltar" >&2; exit 1; }
 fi
 
+[[ "$ALVO" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || { echo "release invalida: $ALVO" >&2; exit 2; }
+[ ! -L "$BASE/releases/$ALVO" ] || { echo "release invalida: $ALVO" >&2; exit 2; }
 [ -d "$BASE/releases/$ALVO" ] || { echo "release inexistente: $ALVO" >&2; exit 1; }
 [ "$ALVO" = "$actual" ] && { echo "ja esta em $ALVO, nada a fazer"; exit 0; }
 
