@@ -3,7 +3,6 @@
 #   infra/deploy-preview.sh <pr_number>
 #
 # Publica o dist/ em /var/www/staging.sergioalmeida.dev/pr/<N>/
-# Sincroniza os ficheiros e snippets do nginx se necessário.
 # Mantém no máximo 10 previews.
 set -euo pipefail
 
@@ -12,12 +11,13 @@ PR="${1:?uso: deploy-preview.sh <pr_number>}"
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 . "$REPO_DIR/infra/lib.sh"
+DIST_DIR="${DIST_DIR:-$REPO_DIR/dist}"
 
-if [ ! -d "$REPO_DIR/dist" ]; then
-  echo "dist/ não encontrado — corre npm run build primeiro" >&2
+if [ ! -f "$DIST_DIR/index.html" ]; then
+  echo "index.html não encontrado no build" >&2
   exit 1
 fi
-[ -z "$(find "$REPO_DIR/dist" -type l -print -quit)" ] || {
+[ -z "$(find "$DIST_DIR" -type l -print -quit)" ] || {
   echo "dist/ contem symlink — publicação recusada" >&2
   exit 1
 }
@@ -25,11 +25,9 @@ fi
 PR_ROOT="$(base_de staging)/pr"
 BASE="$PR_ROOT/$PR"
 
-sync_nginx staging "$REPO_DIR"
-
 # --- publicar preview ---
 mkdir -p "$BASE"
-rsync -rlt --delete "$REPO_DIR/dist/" "$BASE/"
+rsync -rlt --delete "$DIST_DIR/" "$BASE/"
 touch "$BASE"
 chmod -R a=rX,u+w "$BASE"
 echo "-> preview do PR #$PR em /pr/$PR/"

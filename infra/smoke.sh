@@ -36,12 +36,21 @@ tipo="$(pedir --output /dev/null --write-out '%{content_type}' "$URL_BASE/")"
 case "$tipo" in text/html*) ;; *) falhar "o index veio como '$tipo', nao HTML" ;; esac
 grep -q 'id="root"' "$TMP/index.html" || falhar 'o index nao tem <div id="root">'
 
+pedir --dump-header "$TMP/headers" --output /dev/null "$URL_BASE/"
+for header in X-Content-Type-Options X-Frame-Options Referrer-Policy; do
+  grep -iq "^$header:" "$TMP/headers" || falhar "o index nao tem $header"
+done
+
 # 3. o bundle referenciado existe — é isto que apanha um deploy sem assets,
 #    em que o index responde 200 e a página fica em branco
 js="$(grep -o 'src="[^"]*\.js"' "$TMP/index.html" | head -1 | cut -d'"' -f2)"
 [ -n "$js" ] || falhar 'o index nao referencia nenhum bundle js'
 codigo="$(pedir --output /dev/null --write-out '%{http_code}' "$URL_BASE$js")"
 [ "$codigo" = 200 ] || falhar "o bundle $js respondeu $codigo"
+pedir --dump-header "$TMP/headers" --output /dev/null "$URL_BASE$js"
+for header in X-Content-Type-Options X-Frame-Options Referrer-Policy; do
+  grep -iq "^$header:" "$TMP/headers" || falhar "o bundle $js nao tem $header"
+done
 
 # 4. o healthcheck que a Cloudflare consulta
 [ "$(pedir "$URL_BASE/healthz")" = ok ] || falhar '/healthz nao devolveu ok'
