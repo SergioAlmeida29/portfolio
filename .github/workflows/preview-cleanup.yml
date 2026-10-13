@@ -1,25 +1,26 @@
 name: preview-cleanup
 
 on:
-  pull_request_target:
-    types: [closed]
+  schedule:
+    - cron: '17 4 * * *'
 
 concurrency:
-  group: preview-${{ github.event.pull_request.number }}
+  group: preview-cleanup
   cancel-in-progress: false
-  queue: max
 
 jobs:
   cleanup:
-    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, linux]
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
-      - name: apagar preview
-        run: |
-          PR="${{ github.event.pull_request.number }}"
-          [[ "$PR" =~ ^[0-9]+$ ]] || { echo "PR invalido: $PR" >&2; exit 1; }
-          DIR="/var/www/staging.sergioalmeida.dev/pr/$PR"
-          if [ -d "$DIR" ]; then
-            rm -rf "$DIR"
-            echo "-> preview /pr/$PR/ apagado"
-          fi
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: apagar previews de PRs fechados
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash infra/cleanup-previews.sh
