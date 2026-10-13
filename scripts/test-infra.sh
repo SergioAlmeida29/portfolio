@@ -18,6 +18,17 @@ EOF
   chmod +x "$TMP/bin/$command"
 done
 
+cat > "$TMP/bin/gh" <<'EOF'
+#!/usr/bin/env bash
+case "$2" in
+  */123) printf 'closed\n' ;;
+  */124) printf 'open\n' ;;
+  */126) printf 'closed\n' ;;
+  *) exit 1 ;;
+esac
+EOF
+chmod +x "$TMP/bin/gh"
+
 PATH="$TMP/bin:$PATH" WEB_ROOT="$TMP/www" DIST_DIR="$TMP/dist" \
   bash "$ROOT/infra/deploy-preview.sh" 123 >/dev/null
 cmp "$TMP/dist/index.html" "$TMP/www/staging.sergioalmeida.dev/pr/123/index.html"
@@ -36,4 +47,19 @@ fi
 [ "$(readlink -f "$TMP/www/sergioalmeida.dev/current")" = "$TMP/www/sergioalmeida.dev/releases/good" ]
 WEB_ROOT="$TMP/www" bash "$ROOT/infra/rollback.sh" prod good >/dev/null
 
-echo 'infra: preview isolada e rollback validado'
+mkdir -p "$TMP/www/staging.sergioalmeida.dev/pr/124" "$TMP/www/staging.sergioalmeida.dev/pr/126" "$TMP/www/staging.sergioalmeida.dev/pr/129"
+ln -s "$TMP/private" "$TMP/www/staging.sergioalmeida.dev/pr/127"
+touch -d '1 hour ago' "$TMP/www/staging.sergioalmeida.dev/pr/123" "$TMP/www/staging.sergioalmeida.dev/pr/124" "$TMP/www/staging.sergioalmeida.dev/pr/129"
+if PATH="$TMP/bin:$PATH" WEB_ROOT="$TMP/www" GITHUB_REPOSITORY=owner/repo \
+  bash "$ROOT/infra/cleanup-previews.sh" >/dev/null 2>&1; then
+  echo 'cleanup ocultou uma falha da API' >&2
+  exit 1
+fi
+[ ! -e "$TMP/www/staging.sergioalmeida.dev/pr/123" ]
+[ -d "$TMP/www/staging.sergioalmeida.dev/pr/124" ]
+[ -d "$TMP/www/staging.sergioalmeida.dev/pr/126" ]
+[ -L "$TMP/www/staging.sergioalmeida.dev/pr/127" ]
+[ -d "$TMP/private" ]
+[ -d "$TMP/www/staging.sergioalmeida.dev/pr/129" ]
+
+echo 'infra: preview, rollback e limpeza validados'
